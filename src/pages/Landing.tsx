@@ -23,9 +23,11 @@ export function Landing() {
 
   return (
     <div className="flex flex-col">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-paper-100 via-white to-paper-50 py-20 lg:py-28 border-b border-ink-100">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      {/* Hero Section with College Campus Background */}
+      <section className="relative overflow-hidden py-20 lg:py-28 border-b border-ink-100 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/college-bg.png')" }}>
+        {/* Subtle translucent overlay to ensure all text and UI elements remain perfectly clear and readable */}
+        <div className="absolute inset-0 bg-gradient-to-b from-paper-100/90 via-white/85 to-paper-50/90 backdrop-blur-[1px]" />
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-navy-200 bg-navy-50/80 px-3 py-1 text-xs font-semibold text-navy-800 mb-6">
               <Sparkles className="h-3.5 w-3.5 text-navy-600" />
