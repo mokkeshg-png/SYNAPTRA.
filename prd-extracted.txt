@@ -1,0 +1,4787 @@
+Table of Contents
+PRODUCT REQUIREMENTS DOCUMENT (PRD)
+AI-Powered Research Collaboration & Intelligent Team Formation Platform
+Document Version: 2.0 Status: Implementation-Ready Master Specification Target: Hackathon MVP → University Project → Production Scale Last Updated: 2025
+TABLE OF CONTENTS
+Executive Summary
+Product Vision
+Problem Statement
+Existing Problem / Pain Points
+Proposed Solution
+Product Goals
+Non-Goals
+Target Users
+User Personas
+User Roles and Permissions
+Complete User Journey
+Complete System Workflow
+Functional Requirements
+Authentication and Onboarding
+User Profile
+AI Profile Analysis
+Dashboard
+Project Creation
+Project Discovery
+Project Privacy
+Join Request System
+AI Compatibility Engine
+Explainable AI
+AI Collaborator Recommendation
+AI Project Recommendation
+AI Skill-Gap Analysis
+AI Team Formation
+Project Room
+Team Management
+Role Management
+Task Management
+Research Workspace
+Document Management
+Discussion/Communication
+AI Project Assistant
+GitHub Integration
+Search
+Notifications
+Admin Dashboard
+Reporting and Moderation
+Database Requirements
+Database Entity Relationship Design
+Backend Architecture
+Frontend Architecture
+AI Architecture
+AI Data Flow
+AI Prompt/Data Context Strategy
+AI Output Validation
+Security Architecture
+Privacy Architecture
+Supabase Architecture
+GitHub Integration Architecture
+API / Edge Function Requirements
+Role-Based Access Control
+Row Level Security Strategy
+Performance Requirements
+Scalability
+Reliability
+AI Failure Handling
+AI Cost Optimization
+Logging and Monitoring
+Testing Strategy
+Security Testing
+AI Testing
+Edge Cases
+Error Handling
+MVP Scope
+Phase 2 Features
+Advanced Features
+Future Features
+Out-of-Scope Features
+Development Roadmap
+AI-Assisted Development Strategy
+Deployment Strategy
+Environment Variables and Secrets
+Success Metrics
+Risks and Mitigation
+Technical Challenges
+AI Risks and Limitations
+Security Risks
+Future Scalability
+Final Product Architecture
+Final End-to-End Workflow
+Final Feature Priority Matrix
+Final Deliverables Summary
+1. EXECUTIVE SUMMARY
+The AI-Powered Research Collaboration & Intelligent Team Formation Platform is a centralized digital ecosystem designed to solve the fragmented, inefficient, and unreliable process of finding research collaborators in academic environments.
+Today, students and researchers rely on informal channels—WhatsApp groups, Telegram, LinkedIn, college notice boards, and personal networks—to find teammates for research projects, hackathons, final-year projects, and publications. These methods are slow, biased toward existing networks, and provide no reliable signal about a candidate’s actual skills, research interests, or experience.
+This platform replaces that chaos with a structured, AI-assisted workflow:
+Discover projects and researchers through intelligent search and recommendation.
+Match using AI-estimated compatibility scores based on skills, research interests, evidence, and role fit.
+Form teams using AI-recommended balanced team combinations.
+Collaborate inside private project rooms with tasks, research notes, documents, discussions, and GitHub integration.
+Track progress through activity logs, milestones, and analytics.
+The platform is built on Supabase (Auth, PostgreSQL, Row Level Security, Storage, Edge Functions) with a React + TypeScript + Tailwind CSS frontend and a provider-agnostic AI layer (Gemini or OpenAI). It follows a strict principle: AI recommends, humans decide.
+This PRD is the single source of truth for development. It is designed to be implementable in phases—starting with a hackathon-ready MVP and scaling toward a multi-institution academic collaboration platform.
+2. PRODUCT VISION
+To become the default digital environment for academic research collaboration, where any student, researcher, or faculty member can discover the right project, find the right collaborators, form a balanced team, and manage research and development—all in one secure, AI-assisted workspace.
+Vision Statement: > “From scattered WhatsApp messages to structured, AI-assisted research collaboration.”
+The platform bridges the gap between: - Discovery (finding projects/people) - Evaluation (assessing compatibility) - Formation (building balanced teams) - Execution (collaborating on research and code)
+3. PROBLEM STATEMENT
+Students and researchers struggle to find suitable teammates for research projects, academic projects, hackathons, publications, and technical innovation. Existing platforms are not designed for research-team formation.
+This results in: - Wasted time searching through informal channels. - Unreliable skill verification. - Poor team composition (duplicate skills, missing roles). - Overwhelmed project owners reviewing many applicants manually. - Fragmented collaboration across multiple disconnected tools. - No centralized record of contributions, research notes, or project history.
+4. EXISTING PROBLEM / PAIN POINTS
+#
+Pain Point
+Impact
+1
+Difficulty finding people with required technical skills
+Delays project start
+2
+Difficulty identifying matching research interests
+Poor research alignment
+3
+Lack of reliable information about actual experience
+Misrepresented skills
+4
+Overlapping skills, missing complementary expertise
+Unbalanced teams
+5
+Manual evaluation of many applicants
+Owner burnout
+6
+Students don’t know which projects match them
+Missed opportunities
+7
+Communication spread across WhatsApp, email, GitHub, Docs
+Lost context
+8
+No centralized discovery → formation → collaboration flow
+Fragmentation
+9
+Self-declared skills may be inaccurate
+Trust issues
+10
+Professional platforms (LinkedIn) not optimized for temporary academic teams
+Poor fit
+5. PROPOSED SOLUTION
+An AI-powered ecosystem combining:
+Researcher Discovery + AI Matching + Team Formation + Project Rooms + GitHub Collaboration
+Users can: - Create research-oriented profiles (student or faculty). - Publish or discover research projects. - Define required skills and roles. - Apply to join projects or invite collaborators. - Receive AI-generated compatibility analysis with explanations. - Receive AI-recommended balanced team combinations. - Connect GitHub for evidence-based skill analysis. - Collaborate inside private project rooms. - Track tasks, research notes, documents, and activity. - Maintain project history and contributions.
+6. PRODUCT GOALS
+Goal ID
+Goal
+Measurable Outcome
+G1
+Reduce time to find collaborators
+< 7 days from project publish to team formed
+G2
+Improve team balance
+> 80% of formed teams cover all required roles
+G3
+Provide explainable AI matching
+100% of AI scores include reasoning
+G4
+Centralize collaboration
+> 70% of project activity inside platform
+G5
+Enable evidence-based profiles
+> 50% of users connect GitHub or add project evidence
+G6
+Ensure privacy & security
+Zero unauthorized data exposure incidents
+G7
+Support faculty mentorship
+> 20% of projects have a mentor
+7. NON-GOALS
+The following are explicitly not goals for the initial product:
+Building a full social media network.
+Replacing GitHub, Discord, Slack, or Zoom.
+Becoming a full LMS or academic publishing platform.
+Autonomous AI decision-making for team membership.
+Objective, scientifically-proven skill measurement.
+Mobile native applications (responsive web only for MVP).
+Payment or monetization systems.
+Video conferencing.
+Full academic peer review system.
+8. TARGET USERS
+User Type
+Description
+Primary Need
+Student Researcher
+Undergrad/grad students
+Find teammates, join projects
+Project Leader
+Students/faculty creating projects
+Recruit balanced teams
+Researcher
+Early-career researchers
+Collaborate on publications
+Faculty / Mentor
+Professors, guides
+Mentor projects, review progress
+Administrator
+Platform staff
+Moderate, manage, analyze
+9. USER PERSONAS
+Persona 1: Rahul — Final-Year CS Student
+Age: 22
+Goal: Find a team for final-year AI project.
+Pain: WhatsApp groups are chaotic; doesn’t know who actually knows ML.
+Needs: Discover projects, apply, get matched by skills.
+Persona 2: Dr. Priya — Assistant Professor
+Age: 38
+Goal: Mentor 2-3 research projects, guide students.
+Pain: No centralized way to track student progress.
+Needs: Faculty profile, mentor dashboard, project room access.
+Persona 3: Arjun — Project Owner (Student)
+Age: 21
+Goal: Build a 5-person team for a hackathon.
+Pain: 20 applicants, can’t evaluate all manually.
+Needs: AI compatibility scores, team recommendation, gap analysis.
+Persona 4: Divya — Research Writer
+Age: 24
+Goal: Join publication-oriented projects.
+Pain: Her writing skills are undervalued in technical teams.
+Needs: Role-based discovery, research workspace.
+Persona 5: Admin — Platform Moderator
+Goal: Keep platform safe and functional.
+Needs: Admin dashboard, reports, analytics, audit logs.
+10. USER ROLES AND PERMISSIONS
+10.1 Platform Roles (Account Type)
+Role
+Description
+Student
+Default academic user
+Faculty
+Academic professional
+Admin
+Platform administrator
+10.2 Project-Specific Roles (Dynamic)
+Role
+Description
+Project Owner
+Creator/manager of project
+Mentor
+Faculty guiding project
+Project Lead
+Student leading execution
+Member
+Accepted team member
+Applicant
+Applied, not yet accepted
+10.3 Permission Matrix
+Action
+Student
+Faculty
+Owner
+Member
+Mentor
+Admin
+Create profile
+Yes
+Yes
+Yes
+Yes
+Yes
+Yes
+Create project
+Yes
+Yes
+Yes
+No
+Yes
+Yes
+Apply to project
+Yes
+Yes
+Yes
+No
+No
+No
+Review applications
+No
+No
+Yes
+No
+No
+Yes
+Accept/reject members
+No
+No
+Yes
+No
+No
+Yes
+Access project room
+No
+No
+Yes
+Yes
+Yes
+Yes
+Manage tasks
+No
+No
+Yes
+Yes
+Yes
+Yes
+Connect GitHub
+Yes
+Yes
+Yes
+Yes
+Yes
+Yes
+Moderate content
+No
+No
+No
+No
+No
+Yes
+View analytics
+No
+No
+Partial
+No
+Partial
+Yes
+11. COMPLETE USER JOURNEY
+LANDING PAGE     |     vREGISTER / LOGIN(Choose: Student | Faculty)     |     vEMAIL VERIFICATION     |     vPROGRESSIVE ONBOARDINGStep 1: Basic Info -> Step 2: Skills -> Step 3: InterestsStep 4: Projects/Experience -> Step 5: GitHub (optional)     |     vAI PROFILE ANALYSIS(Evidence-based skill assessment, profile completeness)     |     vDASHBOARD[Recommended Projects | Recommended Collaborators | Active Projects]     |     +----------------------+----------------------+     |                                              |     v                                              vDISCOVER PROJECTS                          DISCOVER PEOPLE     |                                              |     v                                              vVIEW PROJECT                                VIEW PROFILE     |                                              |     v                                              vAPPLY TO JOIN                               INVITE USER     |                                              |     +----------------------+----------------------+                            |                            v                  AI ANALYSIS (Compatibility Score)                            |                            v                  PROJECT OWNER REVIEW                            |              +-------------+-------------+              |                           |              v                           v           ACCEPT                      REJECT              |              v       PROJECT ROOM  [Team | Tasks | Research | Docs | GitHub | Discussions | AI | Activity]              |              v     PROJECT PROGRESS + TEAM ANALYSIS + AI RECOMMENDATIONS              |              v        PROJECT COMPLETE
+12. COMPLETE SYSTEM WORKFLOW
+CLIENT (React + TS)[Dashboard | Projects Discovery | Project Room | Profile | Admin]              |  HTTPS + JWT              vSUPABASE AUTH(Registration, Login, Email Verify, Session, OAuth)              |              vPOSTGRESQL + ROW LEVEL SECURITY[Users/Profiles | Projects | Tasks/Research | Docs/GitHub | AI Analyses]              |              vSUPABASE EDGE FUNCTIONS[AI Service Layer | GitHub Integration | Notification Service | Admin Actions]      |                  |      v                  v[Gemini or OpenAI]  [GitHub API (OAuth)]     [Supabase Storage]
+13. FUNCTIONAL REQUIREMENTS
+Functional requirements are organized by module. Each requirement has an ID, priority (P0 = MVP, P1 = Phase 2, P2 = Advanced, P3 = Future), and acceptance criteria.
+13.1 Authentication Module
+Req ID
+Requirement
+Priority
+Acceptance Criteria
+FR-AUTH-001
+Student registration
+P0
+User can register with email/password, select “Student” account type
+FR-AUTH-002
+Faculty registration
+P0
+User can register with email/password, select “Faculty” account type
+FR-AUTH-003
+Email verification
+P0
+User receives verification email; unverified users cannot access platform
+FR-AUTH-004
+Login
+P0
+User can login with verified credentials
+FR-AUTH-005
+Password reset
+P0
+User can reset password via email link
+FR-AUTH-006
+Session management
+P0
+Session persists across page reloads; expires appropriately
+FR-AUTH-007
+Logout
+P0
+User can logout; session invalidated
+FR-AUTH-008
+OAuth (Google)
+P1
+Optional Google sign-in
+FR-AUTH-009
+Institution email domain check
+P2
+Optional: verify academic email domain
+13.2 Profile Module
+Req ID
+Requirement
+Priority
+Acceptance Criteria
+FR-PROF-001
+Create student profile
+P0
+Student can create profile with required fields
+FR-PROF-002
+Create faculty profile
+P0
+Faculty can create profile with faculty-specific fields
+FR-PROF-003
+Edit profile
+P0
+User can edit profile fields
+FR-PROF-004
+Profile photo upload
+P0
+User can upload profile photo (max 5MB, jpg/png)
+FR-PROF-005
+Skills management
+P0
+User can add/remove skills with proficiency level
+FR-PROF-006
+Research interests
+P0
+User can select from structured interest taxonomy
+FR-PROF-007
+Project history
+P0
+User can add past projects with descriptions
+FR-PROF-008
+Certifications
+P1
+User can add certifications
+FR-PROF-009
+Publications
+P1
+User can add publications (title, venue, year, DOI/link)
+FR-PROF-010
+GitHub connection
+P0
+User can connect GitHub via OAuth
+FR-PROF-011
+Portfolio/LinkedIn links
+P1
+User can add external profile links
+FR-PROF-012
+Profile visibility settings
+P1
+User can set profile visibility level
+FR-PROF-013
+Profile completeness indicator
+P0
+System shows % completeness
+13.3 Project Module
+Req ID
+Requirement
+Priority
+Acceptance Criteria
+FR-PROJ-001
+Create project
+P0
+User can create project with required fields
+FR-PROJ-002
+Define required skills
+P0
+Owner can select required skills from taxonomy
+FR-PROJ-003
+Define required roles
+P0
+Owner can define custom roles with descriptions
+FR-PROJ-004
+Set team size
+P0
+Owner can set min/max team size
+FR-PROJ-005
+Set project visibility
+P0
+Owner can choose Public/Private/Restricted
+FR-PROJ-006
+Set application deadline
+P1
+Owner can set deadline
+FR-PROJ-007
+Edit project
+P0
+Owner can edit project details
+FR-PROJ-008
+Close project
+P0
+Owner can close project to new applications
+FR-PROJ-009
+Delete project
+P0
+Owner can delete project (with confirmation)
+FR-PROJ-010
+Project tags
+P1
+Owner can add tags for discovery
+FR-PROJ-011
+Mentor requirement flag
+P1
+Owner can indicate if mentor is required
+FR-PROJ-012
+GitHub requirement flag
+P1
+Owner can indicate if GitHub is required
+13.4 Discovery Module
+Req ID
+Requirement
+Priority
+Acceptance Criteria
+FR-DISC-001
+Project search
+P0
+User can search projects by keyword
+FR-DISC-002
+Project filters
+P0
+Filter by domain, skills, difficulty, type
+FR-DISC-003
+Project sorting
+P0
+Sort by recent, relevance, deadline
+FR-DISC-004
+Researcher search
+P0
+User can search researchers by name, skill, interest
+FR-DISC-005
+Researcher filters
+P1
+Filter by institution, department, availability
+FR-DISC-006
+AI semantic search
+P2
+Natural language search for projects/people
+FR-DISC-007
+Recommended projects
+P1
+AI-ranked project recommendations on dashboard
+FR-DISC-008
+Recommended collaborators
+P1
+AI-ranked collaborator recommendations
+13.5 Application Module
+Req ID
+Requirement
+Priority
+Acceptance Criteria
+FR-APP-001
+Apply to project
+P0
+User can apply with role, motivation, experience
+FR-APP-002
+Prevent duplicate applications
+P0
+User cannot apply twice to same project
+FR-APP-003
+View applications (owner)
+P0
+Owner can view all applications for their project
+FR-APP-004
+Accept application
+P0
+Owner can accept; user becomes member
+FR-APP-005
+Reject application
+P0
+Owner can reject with optional reason
+FR-APP-006
+Withdraw application
+P0
+User can withdraw pending application
+FR-APP-007
+Invite user
+P1
+Owner can invite specific users to project
+FR-APP-008
+Application status tracking
+P0
+User can see status of their applications
+13.6 AI Compatibility Module
+Req ID
+Requirement
+Priority
+Acceptance Criteria
+FR-AI-001
+Compatibility analysis
+P0
+System generates AI-estimated score (0-100) for applicant
+FR-AI-002
+Score breakdown
+P0
+Score includes: skill match, interest match, role match, experience match
+FR-AI-003
+Explainable reasoning
+P0
+System explains strengths and gaps
+FR-AI-004
+Confidence indicator
+P0
+System indicates confidence level (high/medium/low)
+FR-AI-005
+AI disclaimer
+P0
+UI clearly states score is AI-estimated, not objective
+FR-AI-006
+Cache analysis
+P1
+Cache results to avoid redundant AI calls
+FR-AI-007
+Re-analyze
+P1
+Owner can trigger re-analysis if profile updated
+13.7 AI Team Formation Module
+Req ID
+Requirement
+Priority
+Acceptance Criteria
+FR-TEAM-001
+Team recommendation
+P1
+AI recommends balanced team from applicants
+FR-TEAM-002
+Role coverage check
+P1
+Recommendation covers all required roles
+FR-TEAM-003
+Skill gap analysis
+P1
+System identifies missing skills in current team
+FR-TEAM-004
+Gap candidate recommendation
+P1
+System recommends candidates to fill gaps
+FR-TEAM-005
+Owner override
+P0
+Owner can accept/reject/modify AI recommendation
+FR-TEAM-006
+Team diversity consideration
+P2
+Avoid excessive skill duplication
+13.8 Project Room Module
+Req ID
+Requirement
+Priority
+Acceptance Criteria
+FR-ROOM-001
+Project overview
+P0
+Room shows project details, team, progress
+FR-ROOM-002
+Team section
+P0
+Shows members, roles, contact
+FR-ROOM-003
+Task management
+P0
+Create, assign, update, complete tasks
+FR-ROOM-004
+Task statuses
+P0
+To Do, In Progress, Review, Completed
+FR-ROOM-005
+Research notes
+P1
+Create/edit research notes
+FR-ROOM-006
+Document upload
+P1
+Upload documents with access control
+FR-ROOM-007
+Discussion threads
+P1
+Threaded discussions with mentions
+FR-ROOM-008
+Activity timeline
+P1
+Log of project activities
+FR-ROOM-009
+GitHub integration
+P1
+Display repo, commits, PRs, issues
+FR-ROOM-010
+AI assistant
+P2
+Summarize, suggest, analyze
+FR-ROOM-011
+Milestones
+P1
+Create and track milestones
+FR-ROOM-012
+Settings
+P0
+Manage project settings, members, roles
+13.9 Notification Module
+Req ID
+Requirement
+Priority
+Acceptance Criteria
+FR-NOTIF-001
+In-app notifications
+P0
+User receives notifications for key events
+FR-NOTIF-002
+Notification types
+P0
+Join request, accept, reject, invite, task, deadline, member, update
+FR-NOTIF-003
+Mark as read
+P0
+User can mark notifications as read
+FR-NOTIF-004
+Email notifications
+P1
+Optional email digest for important events
+FR-NOTIF-005
+Notification preferences
+P1
+User can configure notification types
+13.10 Admin Module
+Req ID
+Requirement
+Priority
+Acceptance Criteria
+FR-ADMIN-001
+User management
+P0
+Admin can view, suspend, delete users
+FR-ADMIN-002
+Project moderation
+P0
+Admin can review, flag, remove projects
+FR-ADMIN-003
+Report management
+P1
+Admin can review and act on reports
+FR-ADMIN-004
+Analytics dashboard
+P1
+Admin sees platform metrics
+FR-ADMIN-005
+AI usage monitoring
+P1
+Admin sees AI call counts, errors, costs
+FR-ADMIN-006
+Audit logs
+P1
+Admin can view audit trail of sensitive actions
+FR-ADMIN-007
+Suspicious activity
+P2
+System flags suspicious patterns
+14. AUTHENTICATION AND ONBOARDING
+14.1 Authentication Flow
+Landing Page     |     vRegister     |     vChoose Account Type  - Student  - Faculty     |     vEnter Credentials  - Email  - Password  - Confirm Password  - Full Name  - Institution  - Department  - (Student: Year)  - (Faculty: Designation)  - Terms & Privacy checkbox     |     vEmail Verification (Supabase Auth)     |     vProgressive Onboarding     |     vDashboard
+14.2 Validation Rules
+Field
+Rule
+Email
+Valid format, unique, max 255 chars
+Password
+Min 8 chars, 1 uppercase, 1 number
+Full Name
+2-100 chars, letters/spaces/hyphens
+Institution
+2-200 chars
+Department
+2-100 chars
+Academic Year
+1-6 (student only)
+Designation
+2-100 chars (faculty only)
+14.3 Progressive Onboarding (Post-Verification)
+Step 1: Basic Profile (Required) - Profile photo (optional) - Institution, Department (pre-filled) - Academic year / Designation (pre-filled)
+Step 2: Skills (Required — min 3) - Select from skill taxonomy - Set proficiency: Beginner / Intermediate / Advanced - Add custom skills
+Step 3: Research Interests (Required — min 2) - Select from interest taxonomy - Add custom interests
+Step 4: Experience (Optional) - Add past projects - Add internships - Add certifications
+Step 5: External Profiles (Optional) - GitHub OAuth - LinkedIn URL - Portfolio URL
+Step 6: Collaboration Preferences (Optional) - Preferred roles - Availability (hours/week) - Preferred team size
+Users can skip optional steps and complete later. Dashboard shows profile completeness.
+14.4 Institution Verification (MVP: Simple)
+For MVP: - User selects institution from a pre-populated list (or types it). - No verification required initially. - Optional: email domain check (e.g., .edu, .ac.in) for “verified student” badge.
+For Phase 2: - Institution admin accounts. - Domain-based auto-verification. - Manual verification for edge cases.
+15. USER PROFILE
+15.1 Student Profile Fields
+Field
+Required
+Visibility
+Notes
+Full Name
+Yes
+Public
+Profile Photo
+No
+Public
+Email
+Yes
+Private
+Never shown publicly
+Institution
+Yes
+Public
+Department
+Yes
+Public
+Degree Program
+Yes
+Public
+e.g., B.Tech, M.Sc
+Academic Year
+Yes
+Public
+1-6
+Graduation Year
+No
+Public
+Skills
+Yes (min 3)
+Public
+With proficiency
+Research Interests
+Yes (min 2)
+Public
+Programming Languages
+No
+Public
+Subset of skills
+Projects
+No
+Public
+Internships
+No
+Public
+Certifications
+No
+Public
+Publications
+No
+Public
+GitHub
+No
+Public
+OAuth connection
+LinkedIn
+No
+Public
+URL
+Portfolio
+No
+Public
+URL
+Availability
+No
+Platform members
+Hours/week
+Preferred Roles
+No
+Public
+Collaboration Preferences
+No
+Platform members
+AI-Estimated Skill Confidence
+No
+Private (self)
+Evidence-based
+15.2 Faculty Profile Fields
+Field
+Required
+Visibility
+Notes
+Full Name
+Yes
+Public
+Profile Photo
+No
+Public
+Email
+Yes
+Private
+Institution
+Yes
+Public
+Department
+Yes
+Public
+Designation
+Yes
+Public
+e.g., Assistant Professor
+Subjects Taught
+No
+Public
+Teaching Areas
+No
+Public
+Academic Experience
+No
+Public
+Years
+Research Experience
+No
+Public
+Years
+Research Domains
+Yes (min 1)
+Public
+Research Interests
+Yes (min 2)
+Public
+Areas of Expertise
+No
+Public
+Publications
+No
+Public
+Research Projects
+No
+Public
+Conferences
+No
+Public
+Patents
+No
+Public
+Google Scholar
+No
+Public
+URL
+ORCID
+No
+Public
+ID
+ResearchGate
+No
+Public
+URL
+GitHub
+No
+Public
+If relevant
+Personal Website
+No
+Public
+URL
+Open to Collaboration
+No
+Public
+Boolean
+Open to Mentoring
+No
+Public
+Boolean
+Preferred Project Types
+No
+Platform members
+15.3 Profile Privacy Levels
+Level
+Visible To
+Use Case
+Public
+Everyone
+Default for discovery
+Platform Members
+Logged-in users
+For collaboration preferences
+Institution Members
+Same institution
+For internal collaboration
+Project Members
+Only project team
+For project-specific info
+Private
+Only self
+For sensitive data
+16. AI PROFILE ANALYSIS
+16.1 Purpose
+Provide evidence-based skill assessment without falsely claiming expertise.
+16.2 Input Data
+Self-declared skills
+Project descriptions
+GitHub repositories (if connected)
+Publications
+Certifications
+Research interests
+16.3 Processing
+PROFILE DATA COLLECTION(Self-declared skills + Projects + GitHub + Publications)              |              vEVIDENCE AGGREGATIONFor each skill, find supporting evidence:  - Projects mentioning skill  - GitHub repos with language  - Publications with keywords  - Certifications              |              vAI ANALYSIS (Edge Function)Prompt: "Given this evidence, estimate skill confidence"Output: Structured JSON with confidence levels              |              vVALIDATION & STORAGE  - Validate JSON schema  - Store in ai_analyses table  - Display to user (private)
+16.4 Output Format
+{  "skill": "Python",  "confidence": "high",  "evidence": [    "5 related projects",    "Multiple Python repositories on GitHub",    "Relevant project descriptions"  ],  "self_declared_proficiency": "advanced",  "evidence_supported": true,  "note": "Evidence suggests strong practical experience. This is an AI estimate, not a certification."}
+16.5 Important Constraints
+AI must never claim objective expertise.
+Use terms: “evidence-supported”, “AI-estimated”, “confidence level”.
+User can always view and contest AI analysis.
+AI analysis is private to the user by default.
+17. DASHBOARD
+17.1 Student Dashboard
+The student dashboard welcomes the user by name and displays a profile-completeness indicator. It shows four key panels:
+Recommended Projects — e.g. AI Plant Disease Detection (94% match), Healthcare AI (89% match), NLP for Hindi (83% match).
+Recommended Collaborators — e.g. Priya (92% match, ML/Computer Vision), Arjun (88% match, Backend/Python), Divya (85% match, Research Writing).
+Active Projects — e.g. Hackathon Team (5 members), Research Paper (3 members).
+Pending Applications — e.g. Healthcare AI Project, status “Under Review,” applied 3 days ago.
+Below these panels, a Notifications feed lists recent events such as application views, new matching projects, and invitation acceptances.
+17.2 Faculty Dashboard
+The faculty dashboard welcomes the user by name with a profile-completeness indicator, and shows:
+Mentoring — active mentored projects with progress bars (e.g. AI Plant Disease 65%, Healthcare AI 40%).
+Student Requests — pending mentorship requests from students.
+Research Collaborations — count of active collaborations.
+Collaboration Opportunities — projects matching the faculty member’s research interests.
+Recent Activity — a feed of milestone submissions and new publications from collaborators.
+17.3 Dashboard Sections
+Section
+Student
+Faculty
+Owner
+Mentor
+Profile Completion
+Yes
+Yes
+Yes
+Yes
+Recommended Projects
+Yes
+Yes
+Yes
+Yes
+Recommended Collaborators
+Yes
+Yes
+Yes
+Yes
+Active Projects
+Yes
+Yes
+Yes
+Yes
+Pending Applications
+Yes
+No
+Yes (received)
+No
+Mentoring Projects
+No
+Yes
+No
+Yes
+Notifications
+Yes
+Yes
+Yes
+Yes
+Quick Actions
+Yes
+Yes
+Yes
+Yes
+18. PROJECT CREATION
+18.1 Project Creation Form
+Field
+Required
+Type
+Notes
+Title
+Yes
+Text (5-150)
+Short Description
+Yes
+Text (50-300)
+For cards
+Detailed Description
+Yes
+Rich Text
+Full details
+Problem Statement
+No
+Rich Text
+Objectives
+No
+List
+Research Domain
+Yes
+Select (multi)
+From taxonomy
+Research Interests
+Yes
+Select (multi)
+From taxonomy
+Required Skills
+Yes
+Select (multi)
+From taxonomy
+Required Roles
+Yes
+Custom list
+Name + description
+Team Size
+Yes
+Min/Max
+Project Duration
+No
+Text
+e.g., “3 months”
+Difficulty Level
+Yes
+Select
+Beginner/Intermediate/Advanced
+Project Type
+Yes
+Select
+Academic/Research/Hackathon/etc.
+Visibility
+Yes
+Select
+Public/Private/Restricted
+Application Deadline
+No
+Date
+Expected Outcomes
+No
+Text
+Mentor Required
+No
+Boolean
+GitHub Required
+No
+Boolean
+Tags
+No
+Multi-select
+18.2 Project Types
+Type
+Description
+Academic Project
+Course-related
+Research Project
+Publication-oriented
+Final-Year Project
+Graduation requirement
+Hackathon
+Time-bound competition
+Innovation Project
+Startup/innovation
+Open-Source
+Community contribution
+Publication-Oriented
+Paper/conference target
+Faculty-Led Research
+Professor-initiated
+Interdisciplinary
+Cross-domain
+These are fixed categories initially. Can be made configurable in Phase 2.
+18.3 Role Definition
+Project owner can define custom roles. Each role has: - Name (e.g., “ML Engineer”) - Description (e.g., “Builds and trains ML models”) - Required skills (optional) - Number of openings (default: 1)
+Default role templates (can be customized): - Project Lead - Researcher - Machine Learning Engineer - Data Scientist - Frontend Developer - Backend Developer - UI/UX Designer - Research Writer - Reviewer - Faculty/Mentor
+19. PROJECT DISCOVERY
+19.1 Discovery Page
+The Explore Projects page provides a search bar, filters (Domain, Skills, Difficulty, Type, Sort), and a scrollable list of project cards. Each card shows the project title, domain, required skills, open roles, team fill ratio, difficulty, deadline countdown, and an AI-estimated match percentage, with “View Details” and “Apply” actions. A “Load More” control paginates additional results.
+19.2 Ranking System
+Project recommendations use a hybrid ranking:
+Final Score = w1 x Skill Match            + w2 x Interest Match            + w3 x Role Match            + w4 x Experience Match            + w5 x Recency            + w6 x Availability
+Where: - Skill Match: Deterministic overlap between user skills and project required skills (0-1). - Interest Match: Overlap between user research interests and project domain (0-1). - Role Match: Whether user’s preferred roles align with open roles (0-1). - Experience Match: User’s experience level vs. project difficulty (0-1). - Recency: Projects published recently rank higher (0-1). - Availability: User availability vs. project duration (0-1).
+Weights are configurable and stored in a config table.
+AI augmentation: For semantic search, embeddings are used to find projects matching natural language queries.
+20. PROJECT PRIVACY
+Visibility
+Description
+Who Can See
+Who Can Apply
+Public
+Fully visible
+Everyone
+Everyone
+Private
+Hidden from discovery
+Only invited users
+Invite only
+Restricted
+Discoverable, limited details
+Everyone (limited)
+Everyone (after requesting full access)
+Restricted Mode Details
+Card shows: Title, domain, brief description, team size.
+Hidden until accepted: Detailed description, problem statement, objectives, documents, discussions.
+User can “Request Full Details” which sends a request to owner.
+21. JOIN REQUEST SYSTEM
+21.1 Application Flow
+View Project     |     vClick "Apply to Join"     |     vApplication Form  - Select Role  - Motivation (200-1000 chars)  - Relevant Experience  - Skills (pre-filled)  - Optional Message     |     vSubmit Application     |     vAI Compatibility Analysis (Edge Function)     |     vNotify Project Owner
+21.2 Application Record
+Field
+Description
+id
+UUID
+project_id
+FK to projects
+applicant_id
+FK to users
+selected_role_id
+FK to project_roles
+motivation
+Text
+relevant_experience
+Text
+message
+Text (optional)
+status
+pending/accepted/rejected/withdrawn
+ai_analysis_id
+FK to ai_analyses
+created_at
+Timestamp
+updated_at
+Timestamp
+21.3 Business Rules
+User cannot apply twice to same project (unique constraint).
+User cannot apply if already a member.
+User cannot apply if project is closed/full.
+Owner cannot apply to own project.
+Application can be withdrawn while pending.
+22. AI COMPATIBILITY ENGINE
+22.1 Purpose
+Provide project owners with an AI-estimated compatibility score and explanation for each applicant.
+22.2 Architecture
+PROJECT OWNER VIEWS APPLICANT              |              vEDGE FUNCTION: analyze-compatibility  1. Authenticate user (owner)  2. Verify owner has access to project  3. Retrieve project requirements (authorized)  4. Retrieve applicant profile (authorized subset)  5. Build minimal AI context  6. Call AI provider  7. Validate JSON response  8. Store result in ai_analyses  9. Return to frontend              |              vAI PROVIDER (Gemini/OpenAI)Prompt: "Compare this project requirement with this candidateprofile. Return JSON with: compatibility_score, skill_match,interest_match, role_match, experience_match, strengths,gaps, reason, confidence."              |              vVALIDATION LAYER  - Check JSON schema  - Clamp scores to 0-100  - Ensure all required fields present  - Sanitize text output              |              vFRONTEND DISPLAY  - Show scores with visual indicators  - Show strengths (+) and gaps (-)  - Show reasoning  - Show AI disclaimer
+22.3 Input Data Sent to AI
+Project side (minimum necessary): - Project title - Research domain - Required skills - Required roles - Difficulty level - Brief description (sanitized)
+Candidate side (minimum necessary): - Self-declared skills (names only) - Research interests - Relevant project titles + brief descriptions - Preferred role - Application motivation - Evidence flags (has GitHub, has publications)
+NOT sent: - Email addresses - Phone numbers - Institution names (unless relevant) - Unrelated personal info - Private documents - Full GitHub data
+22.4 Output Format
+{  "compatibility_score": 91,  "skill_match": 94,  "interest_match": 89,  "role_match": 95,  "experience_match": 88,  "strengths": [    "Strong Python experience with 5 related projects",    "Relevant machine learning and computer vision work",    "Research interests align with project domain"  ],  "gaps": [    "Limited evidence of research documentation experience"  ],  "reason": "Candidate demonstrates strong technical alignment with the project's core requirements in Python, machine learning, and computer vision. Research interests overlap significantly. The main gap is research writing experience.",  "confidence": "high",  "disclaimer": "This is an AI-estimated compatibility score, not an objective measurement of ability."}
+22.5 Scoring Framework
+The overall score is a weighted combination of sub-scores:
+compatibility_score = 0.35 x skill_match                    + 0.25 x interest_match                    + 0.20 x role_match                    + 0.20 x experience_match
+Weights are configurable. The AI provides sub-scores based on evidence; the backend computes the final weighted score deterministically. This prevents the LLM from arbitrarily inventing a final score.
+23. EXPLAINABLE AI
+Every AI recommendation must explain why.
+23.1 Explanation Structure
+Component
+Description
+Example
+Strengths
+What matches well
+“Strong Python experience”
+Gaps
+What’s missing or weak
+“Limited research writing”
+Reason
+Overall justification
+“Strong technical alignment but less documentation experience”
+Confidence
+AI’s confidence in analysis
+“high” / “medium” / “low”
+Evidence
+What evidence was used
+“5 projects, GitHub repos, publications”
+23.2 UI Display
+The AI Compatibility Analysis panel displays a confidence badge (e.g. HIGH) and the overall compatibility percentage, followed by progress bars for Skill Match, Interest Match, Role Match, and Experience Match. Below the bars, a “Strengths” list (marked with a check) and a “Potential Gaps” list (marked with a warning icon) are shown, followed by a short reasoning paragraph and a persistent disclaimer stating the score is AI-estimated, not an objective measurement of ability.
+24. AI COLLABORATOR RECOMMENDATION
+24.1 Purpose
+Recommend potential collaborators to a user based on complementary skills and shared interests.
+24.2 Input
+Current user’s skills, interests, preferred roles
+Candidate pool (filtered by institution, availability, etc.)
+24.3 Processing
+Step 1: Deterministic Filtering - Exclude users already in same projects - Exclude users with incompatible availability - Filter by institution (if user prefers)
+Step 2: Similarity Scoring - Skill complementarity (not just overlap) - Research interest overlap - Role complementarity
+Step 3: AI Re-ranking (optional) - For top N candidates, AI provides nuanced ranking - AI explains why each candidate is recommended
+24.4 Output
+{  "recommendations": [    {      "user_id": "uuid",      "name": "Priya Sharma",      "compatibility_score": 92,      "complementary_skills": ["Computer Vision", "Data Analysis"],      "shared_interests": ["Healthcare AI", "Machine Learning"],      "reason": "Complements your ML skills with computer vision expertise. Shared interest in healthcare AI.",      "confidence": "high"    }  ]}
+25. AI PROJECT RECOMMENDATION
+25.1 Purpose
+Recommend projects to users based on their profile.
+25.2 Input
+User skills, interests, preferred roles, experience
+Available projects (filtered)
+25.3 Processing
+Step 1: Deterministic Filtering - Exclude projects user already applied to - Exclude projects user is member of - Filter by visibility (public/restricted) - Filter by deadline (not expired)
+Step 2: Scoring - Skill match score - Interest match score - Role match score - Difficulty match score
+Step 3: AI Re-ranking (optional) - For top N projects, AI provides nuanced ranking
+25.4 Output
+{  "recommendations": [    {      "project_id": "uuid",      "title": "AI-Based Plant Disease Detection",      "match_score": 94,      "matching_skills": ["Python", "Machine Learning"],      "matching_interests": ["Computer Vision", "Agriculture Tech"],      "reason": "Strong overlap with your ML and computer vision interests.",      "confidence": "high"    }  ]}
+26. AI SKILL-GAP ANALYSIS
+26.1 Purpose
+Identify missing capabilities in a project team and recommend candidates to fill gaps.
+26.2 Input
+Project required skills
+Project required roles
+Current team members’ skills
+Candidate pool
+26.3 Processing
+CURRENT TEAM SKILLSPython, ML, Backend, Data Science              |              vPROJECT REQUIRED SKILLSPython, ML, Computer Vision, Frontend, Research Writing              |              vGAP IDENTIFICATIONMissing: Computer Vision, Frontend, Research Writing              |              vCANDIDATE RECOMMENDATIONFor each gap, find candidates with matching skillsRank by compatibility score              |              vOUTPUTGaps + Recommended candidates per gap
+26.4 Output
+{  "team_skills": ["Python", "ML", "Backend", "Data Science"],  "required_skills": ["Python", "ML", "Computer Vision", "Frontend", "Research Writing"],  "gaps": [    {      "skill": "Computer Vision",      "priority": "high",      "recommended_candidates": [        {          "user_id": "uuid",          "name": "Priya Sharma",          "match_score": 91,          "reason": "Strong computer vision experience with 3 projects"        }      ]    },    {      "skill": "Frontend",      "priority": "medium",      "recommended_candidates": []    }  ],  "summary": "Team has strong backend and ML capabilities but lacks computer vision, frontend, and research writing. Priority: fill computer vision gap."}
+27. AI TEAM FORMATION
+27.1 Purpose
+Given a project and a pool of applicants, recommend a balanced team combination.
+27.2 Input
+Project required roles
+Project required skills
+Applicant pool (with compatibility scores)
+Team size constraints
+27.3 Algorithm
+This is a constrained optimization problem, not a pure LLM task.
+Step 1: Deterministic Pre-processing - Filter applicants by minimum compatibility threshold (e.g., > 60%) - Group applicants by role
+Step 2: Optimization - Use a greedy or Hungarian algorithm to assign applicants to roles - Maximize: total skill coverage + role coverage - skill duplication - Constraint: each role filled by at most one applicant - Constraint: team size within min/max
+Step 3: AI Post-processing (optional) - AI reviews the recommended team - AI provides qualitative assessment - AI suggests alternative combinations if needed
+Step 4: Explainability - Show which roles are covered - Show skill coverage - Show any gaps - Show alternative candidates per role
+27.4 Output
+{  "recommended_team": [    {      "role": "ML Engineer",      "candidate": {"user_id": "uuid", "name": "Rahul", "compatibility_score": 94}    },    {      "role": "Research Writer",      "candidate": {"user_id": "uuid", "name": "Priya", "compatibility_score": 89}    },    {      "role": "Backend Developer",      "candidate": {"user_id": "uuid", "name": "Arjun", "compatibility_score": 92}    },    {      "role": "Frontend Developer",      "candidate": {"user_id": "uuid", "name": "Karthik", "compatibility_score": 88}    },    {      "role": "Data Scientist",      "candidate": {"user_id": "uuid", "name": "Divya", "compatibility_score": 90}    }  ],  "team_skill_coverage": 95,  "role_coverage": 100,  "skill_duplication": "low",  "gaps": [],  "reason": "This team covers all required roles with strong skill alignment. Low skill duplication. Balanced experience levels.",  "alternatives": [    {"role": "ML Engineer", "alternative_candidate": {"name": "Sneha", "compatibility_score": 91}}  ],  "disclaimer": "AI recommends, owner decides. This is a suggestion, not an automatic selection."}
+27.5 Important
+Final decision always rests with Project Owner.
+Owner can accept all, accept some, or modify.
+AI recommendation is advisory only.
+28. PROJECT ROOM
+28.1 Overview
+The Project Room is the central collaboration environment for accepted members.
+28.2 Sections
+Section
+Description
+MVP
+Phase 2
+Advanced
+Overview
+Project summary, progress, key info
+Yes
+Team
+Member list, roles, contact
+Yes
+Roles
+Role definitions, assignments
+Yes
+Tasks
+Task board, assignments, statuses
+Yes
+Research
+Research notes, literature
+No
+Yes
+Documents
+File uploads, access control
+No
+Yes
+Discussions
+Threaded discussions, mentions
+No
+Yes
+GitHub
+Repo connection, activity
+No
+Yes
+Activity
+Timeline of events
+Yes
+AI Assistant
+Summaries, suggestions
+No
+No
+Yes
+Milestones
+Project milestones
+No
+Yes
+Settings
+Project settings, member mgmt
+Yes
+28.3 Project Room Layout
+The Project Room uses a left-hand navigation sidebar (Overview, Team, Roles, Tasks, Research, Documents, Discuss, GitHub, Activity, AI Assist, Milestones, Settings) alongside a main content pane. The Overview panel shows a progress bar (e.g. 65%), team size, task totals (e.g. “12 total, 7 completed”), and the next milestone with its due date. A “Recent Activity” panel below lists the latest events, such as completed tasks, uploaded documents, and new GitHub pull requests.
+29. TEAM MANAGEMENT
+29.1 Owner Capabilities
+Action
+Description
+View applications
+See all pending applications with AI scores
+Accept application
+Move applicant to member
+Reject application
+Decline with optional reason
+Invite user
+Send invitation to specific user
+Remove member
+Remove member from project
+Assign role
+Assign project role to member
+Change role
+Change member’s role
+Transfer ownership
+Transfer project ownership
+Set permissions
+Configure member permissions
+29.2 Member Capabilities
+Action
+Description
+View team
+See all members and roles
+View tasks
+See assigned tasks
+Update task status
+Move own tasks forward
+Upload documents
+Add project documents
+Participate in discussions
+Comment, discuss
+Use AI assistant
+Query project assistant
+29.3 Membership States
+Membership progresses through the following states: Invited transitions to either Active or Declined; Active transitions to either Removed or Left.
+30. ROLE MANAGEMENT
+30.1 Role Types
+Role Type
+Description
+Example
+Platform Role
+Account-level role
+Student, Faculty, Admin
+Project Role
+Project-specific role
+ML Engineer, Research Writer
+System Role
+System-level permissions
+Owner, Member, Mentor
+30.2 Role Assignment
+Platform roles are assigned at registration.
+Project roles are defined by project owner and assigned to members.
+System roles (Owner, Member, Mentor) are automatically assigned based on actions.
+30.3 Role Permissions
+Permission
+Owner
+Mentor
+Member
+Applicant
+Edit project
+Yes
+No
+No
+No
+Manage members
+Yes
+No
+No
+No
+Create tasks
+Yes
+Yes
+Yes
+No
+Assign tasks
+Yes
+Yes
+No
+No
+View tasks
+Yes
+Yes
+Yes
+No
+Upload documents
+Yes
+Yes
+Yes
+No
+View documents
+Yes
+Yes
+Yes
+No
+Post discussions
+Yes
+Yes
+Yes
+No
+View discussions
+Yes
+Yes
+Yes
+No
+Use AI assistant
+Yes
+Yes
+Yes
+No
+View activity
+Yes
+Yes
+Yes
+No
+Manage GitHub
+Yes
+No
+No
+No
+31. TASK MANAGEMENT
+31.1 Task Fields
+Field
+Required
+Description
+Title
+Yes
+Short task name
+Description
+No
+Detailed task description
+Assigned To
+No
+Member (can be unassigned)
+Role
+No
+Required role for task
+Priority
+Yes
+Low/Medium/High/Critical
+Deadline
+No
+Due date
+Status
+Yes
+To Do / In Progress / Review / Completed
+Created By
+Yes
+Auto-filled
+Created At
+Yes
+Auto-filled
+Updated At
+Yes
+Auto-updated
+31.2 Task Board View
+The Task Board presents four columns — To Do, In Progress, Review, and Completed — each populated with task cards showing the title, priority badge, and assignee. A “+ New Task” control sits at the top of the board.
+31.3 Task Permissions
+Action
+Owner
+Mentor
+Member
+Creator
+Create task
+Yes
+Yes
+Yes
+Yes
+Edit task
+Yes
+Yes
+Own
+Yes
+Delete task
+Yes
+Yes
+Own
+Yes
+Assign task
+Yes
+Yes
+No
+No
+Change status
+Yes
+Yes
+Assigned
+Yes
+Comment
+Yes
+Yes
+Yes
+Yes
+32. RESEARCH WORKSPACE
+32.1 Research Notes
+Field
+Description
+Title
+Note title
+Content
+Rich text
+Category
+Literature / Experiment / Meeting / Idea
+Tags
+Multi-select
+Created By
+Author
+Created At
+Timestamp
+Updated At
+Timestamp
+Visibility
+Project members only
+32.2 Reference Manager
+Field
+Description
+Title
+Paper title
+Authors
+Author list
+Year
+Publication year
+Venue
+Journal/Conference
+DOI/Link
+External link
+Notes
+Personal notes
+Added By
+User
+Tags
+Multi-select
+32.3 Experiment Records
+Field
+Description
+Name
+Experiment name
+Objective
+What was tested
+Method
+How it was done
+Results
+Outcomes
+Conclusion
+What was learned
+Date
+When conducted
+Created By
+User
+32.4 Meeting Notes
+Field
+Description
+Date
+Meeting date
+Attendees
+List of members
+Agenda
+Topics discussed
+Decisions
+What was decided
+Action Items
+Tasks assigned
+Created By
+Note taker
+32.5 Dataset Information
+Field
+Description
+Name
+Dataset name
+Source
+Where it came from
+Size
+Number of records
+Format
+CSV/JSON/etc.
+Description
+What it contains
+Link
+External link
+Added By
+User
+33. DOCUMENT MANAGEMENT
+33.1 Supported File Types
+Type
+Extensions
+Max Size
+Documents
+.pdf, .doc, .docx, .txt, .md
+50 MB
+Images
+.jpg, .png, .gif, .svg
+10 MB
+Data
+.csv, .json, .xlsx
+20 MB
+Archives
+.zip, .tar.gz
+100 MB
+33.2 Access Control
+Visibility
+Who Can Access
+Project Members
+All accepted members
+Role-Restricted
+Only specified roles
+Owner Only
+Only project owner
+Mentor + Owner
+Owner and mentor
+33.3 Document Features
+Feature
+Description
+MVP
+Phase 2
+Upload
+Upload files
+No
+Yes
+Download
+Download files
+No
+Yes
+Preview
+In-browser preview
+No
+Yes
+Versioning
+Track versions
+No
+No
+Comments
+Comment on docs
+No
+Yes
+Search
+Search document content
+No
+No
+34. DISCUSSION / COMMUNICATION
+34.1 Discussion Features
+Feature
+Description
+MVP
+Phase 2
+Threaded discussions
+Topic-based threads
+No
+Yes
+Comments
+Reply to discussions
+No
+Yes
+Mentions
+@mention members
+No
+Yes
+Reactions
+Emoji reactions
+No
+Yes
+Attachments
+Attach files
+No
+Yes
+Search
+Search discussions
+No
+No
+34.2 Discussion Structure
+A discussion thread has a title (e.g. “Model architecture decision”), a creator, a created-at timestamp, and a nested set of replies — for example, one member proposing an architecture, others agreeing or countering with alternatives, and a final member volunteering to help — with an overall thread status (Open/Closed).
+34.3 Notification Integration
+Mentioned users receive notification.
+Thread creator receives notification on reply.
+Users can subscribe/unsubscribe to threads.
+35. AI PROJECT ASSISTANT
+35.1 Purpose
+Provide AI-powered assistance inside the project room, using only authorized data.
+35.2 Capabilities
+Capability
+Description
+Priority
+Project Summary
+Summarize project status
+P2
+Task Summary
+Summarize tasks and progress
+P2
+Discussion Summary
+Summarize recent discussions
+P2
+Meeting Summary
+Summarize meeting notes
+P2
+Progress Summary
+Overall progress analysis
+P2
+Skill-Gap Analysis
+Identify team gaps
+P1
+Next-Step Suggestions
+Suggest what to do next
+P2
+Requirement Explanation
+Explain project requirements
+P2
+Research Assistance
+Help with research docs
+P3
+35.3 Data Access
+The AI assistant only accesses data the current user is authorized to view: - Project details - Team information - Tasks - Discussions (if member) - Documents (if authorized) - GitHub activity
+Never accesses: - Other projects - Private user data - Admin data - Unauthorized documents
+35.4 Interaction Model
+User asks: "What should we focus on this week?"              |              vEdge Function: ai-project-assistant  1. Authenticate user  2. Verify project membership  3. Retrieve authorized data:     - Open tasks     - Recent activity     - Upcoming milestones     - Recent discussions  4. Build minimal context  5. Call AI provider  6. Validate response  7. Return to user
+35.5 Output Format
+{  "summary": "The team has completed data collection and is now in the model development phase.",  "priority_actions": [    "Complete model training (Task #4, due in 3 days)",    "Review Priya's literature review draft",    "Schedule next team meeting"  ],  "risks": [    "Model training may be delayed due to dataset size",    "Frontend work hasn't started yet"  ],  "suggestions": [    "Consider assigning a frontend developer soon",    "Benchmark ResNet-50 vs EfficientNet as discussed"  ],  "confidence": "high"}
+36. GITHUB INTEGRATION
+36.1 User-Level GitHub
+Feature
+Description
+Priority
+Connect GitHub
+OAuth authorization
+P0
+Disconnect GitHub
+Revoke access
+P0
+Show repositories
+List user’s repos
+P1
+Analyze evidence
+Use repos for skill analysis
+P1
+Contribution stats
+Show contribution graph
+P2
+36.2 Project-Level GitHub
+Feature
+Description
+Priority
+Connect repository
+Link GitHub repo to project
+P1
+Display repository
+Show repo info
+P1
+Commits
+Recent commits
+P1
+Pull requests
+Open/closed PRs
+P1
+Issues
+Open/closed issues
+P1
+Contributors
+Contributor list
+P1
+Activity
+Repository activity graph
+P2
+36.3 Security
+Requirement
+Description
+OAuth flow
+Use GitHub OAuth, never store passwords
+Token storage
+Store tokens in Supabase secrets (server-side only)
+Token scope
+Minimum required scopes (read:user, repo)
+Token expiration
+Handle expiration, prompt re-authorization
+Token revocation
+Allow user to disconnect
+Frontend safety
+Never expose tokens to frontend
+API calls
+All GitHub API calls via Edge Functions
+36.4 GitHub Data Flow
+User clicks "Connect GitHub"              |              vRedirect to GitHub OAuth              |              vUser authorizes              |              vGitHub callback -> Edge Function              |              vExchange code for token              |              vStore token in Supabase secrets (encrypted)              |              vFetch user's repositories              |              vStore repo metadata (not token) in database              |              vDisplay on profile
+37. SEARCH
+37.1 Search Types
+Type
+Description
+Priority
+User Search
+Search by name, skill, interest
+P0
+Project Search
+Search by title, domain, skill
+P0
+Skill Search
+Find users by skill
+P0
+Interest Search
+Find users/projects by interest
+P0
+Institution Search
+Find users by institution
+P1
+Role Search
+Find users by preferred role
+P1
+AI Semantic Search
+Natural language search
+P2
+37.2 Search Implementation
+MVP (Deterministic): - PostgreSQL full-text search on relevant fields - Filters: domain, skills, institution, role, difficulty, project type - Sorting: relevance, recent, deadline
+Phase 2 (Semantic): - Generate embeddings for user profiles and project descriptions - Store in pgvector (Supabase supports this) - Semantic search using cosine similarity - Combine with deterministic filters
+37.3 Search API
+POST /search/usersBody: {  "query": "computer vision",  "filters": {    "skills": ["Python", "ML"],    "interests": ["Computer Vision"],    "institution": "IIT Delhi",    "role": "ML Engineer"  },  "sort": "relevance",  "page": 1,  "limit": 20}
+38. NOTIFICATIONS
+38.1 Notification Types
+Type
+Trigger
+Recipient
+Priority
+Join Request Received
+User applies
+Project Owner
+P0
+Application Accepted
+Owner accepts
+Applicant
+P0
+Application Rejected
+Owner rejects
+Applicant
+P0
+Project Invitation
+Owner invites
+Invited User
+P0
+Task Assigned
+Task assigned
+Assignee
+P0
+Task Deadline
+24h before deadline
+Assignee
+P1
+New Team Member
+Member accepted
+All members
+P0
+Project Update
+Project edited
+All members
+P1
+AI Recommendation
+AI suggests
+Relevant user
+P2
+GitHub Activity
+New commit/PR
+Project members
+P2
+Mentor Feedback
+Mentor comments
+Project members
+P1
+Mention
+@mentioned
+Mentioned user
+P1
+38.2 Notification Channels
+Channel
+Priority
+Description
+In-App
+P0
+Notification bell + list
+Email
+P1
+Digest or instant
+Push
+P3
+Future mobile app
+38.3 Notification Schema
+{  "id": "uuid",  "user_id": "uuid",  "type": "application_accepted",  "title": "Application Accepted",  "message": "Your application to AI Plant Disease Detection was accepted!",  "link": "/projects/uuid",  "read": false,  "created_at": "timestamp"}
+39. ADMIN DASHBOARD
+39.1 Admin Sections
+Section
+Description
+Priority
+Overview
+Platform stats summary
+P0
+Users
+User management
+P0
+Projects
+Project moderation
+P0
+Reports
+User reports
+P1
+Analytics
+Platform analytics
+P1
+AI Usage
+AI call monitoring
+P1
+Audit Logs
+Sensitive action logs
+P1
+System Health
+Service status
+P2
+39.2 Admin Metrics
+Metric
+Description
+Total Users
+Registered users
+Active Users
+Users active in last 7 days
+New Registrations
+Users registered this week
+Total Projects
+Projects created
+Active Projects
+Projects with recent activity
+Completed Projects
+Projects marked complete
+Join Requests
+Applications received
+Team Formations
+Successful teams formed
+AI Analyses
+AI compatibility analyses run
+AI Errors
+Failed AI calls
+AI Cost
+Estimated AI API cost
+Reports
+Pending reports
+Suspicious Activity
+Flagged events
+39.3 Admin Actions
+Action
+Description
+Audit Log
+Suspend User
+Temporarily disable account
+Yes
+Delete User
+Permanently remove account
+Yes
+Flag Project
+Mark for review
+Yes
+Remove Project
+Delete inappropriate project
+Yes
+Resolve Report
+Mark report as resolved
+Yes
+View Audit Log
+See admin action history
+Yes
+Configure System
+Update platform settings
+Yes
+40. REPORTING AND MODERATION
+40.1 Report Types
+Type
+Description
+Fake Profile
+Misrepresented identity
+Spam
+Unsolicited content
+Harassment
+Abusive behavior
+Misleading Project
+False project info
+Inappropriate Content
+Offensive material
+Suspicious Activity
+Unusual behavior
+Other
+Custom reason
+40.2 Moderation Workflow
+A user report is stored as pending. An admin reviews the report and either takes action — warn, suspend, remove content, or escalate — or dismisses the report and closes it.
+40.3 Moderation Actions
+Action
+Description
+Warn
+Send warning to user
+Suspend
+Temporarily disable account
+Ban
+Permanently disable account
+Remove Content
+Delete reported content
+Dismiss
+No action needed
+Escalate
+Forward to senior admin
+41. DATABASE REQUIREMENTS
+41.1 Design Principles
+Normalized to 3NF where practical.
+UUIDs for primary keys (gen_random_uuid()).
+Timestamps on all tables (created_at, updated_at).
+Soft deletes where appropriate (deleted_at).
+Indexes on foreign keys and frequently queried columns.
+Constraints for data integrity.
+RLS on all tables.
+41.2 Data Ownership
+Data
+Owner
+Access
+Profile
+User
+User + authorized viewers
+Project
+Project Owner
+Owner + members + admins
+Documents
+Uploader
+Project members (per visibility)
+Research Notes
+Author
+Project members
+AI Analysis
+System
+Owner + relevant user
+GitHub Data
+User/Project
+User/Project members
+Notifications
+User
+User only
+Admin Actions
+Admin
+Admins only
+42. DATABASE ENTITY RELATIONSHIP DESIGN
+42.1 Entity List
+The core entity groups are:
+users → profiles → student_profiles / faculty_profiles; user_skills; user_interests; user_projects (past projects); user_publications; user_certifications; github_connections
+projects → project_skills; project_roles; project_members; project_invitations; join_requests; team_recommendations; tasks; task_comments; milestones; documents; research_notes; references; discussions; discussion_replies; github_repositories; github_activity
+ai_analyses, ai_recommendations
+notifications, activity_logs, reports, admin_actions
+skills, skill_categories, research_interests, interest_categories, project_types
+42.2 Entity Relationships (Summary)
+users has a one-to-one relationship with profiles, which in turn has one-to-one relationships with student_profiles and faculty_profiles. A user has many user_skills (each referencing a row in skills) and many user_interests (each referencing research_interests). A user can have one github_connections record.
+projects are owned by a user (owner_id) and have many project_skills, project_roles, project_members, and join_requests. Each project_member references a project_role. Each join_request references a project_role and optionally an ai_analyses record.
+projects also have many tasks, milestones, documents, research_notes, and discussions; each discussion has many discussion_replies.
+42.3 Table Specifications
+users
+Column
+Type
+Constraints
+id
+UUID
+PK, default gen_random_uuid()
+email
+TEXT
+UNIQUE, NOT NULL
+encrypted_password
+TEXT
+NOT NULL (managed by Supabase Auth)
+role
+TEXT
+NOT NULL, CHECK (student, faculty, admin)
+email_verified
+BOOLEAN
+DEFAULT false
+created_at
+TIMESTAMPTZ
+DEFAULT now()
+updated_at
+TIMESTAMPTZ
+DEFAULT now()
+profiles
+Column
+Type
+Constraints
+id
+UUID
+PK, default gen_random_uuid()
+user_id
+UUID
+FK -> users(id), UNIQUE, NOT NULL
+full_name
+TEXT
+NOT NULL
+photo_url
+TEXT
+institution
+TEXT
+NOT NULL
+department
+TEXT
+NOT NULL
+bio
+TEXT
+visibility
+TEXT
+DEFAULT ‘public’, CHECK (public, members, institution, private)
+profile_completeness
+INTEGER
+DEFAULT 0
+created_at
+TIMESTAMPTZ
+DEFAULT now()
+updated_at
+TIMESTAMPTZ
+DEFAULT now()
+student_profiles
+Column
+Type
+Constraints
+id
+UUID
+PK
+profile_id
+UUID
+FK -> profiles(id), UNIQUE
+degree_program
+TEXT
+academic_year
+INTEGER
+CHECK (1-6)
+graduation_year
+INTEGER
+availability_hours
+INTEGER
+preferred_roles
+TEXT[]
+preferred_team_size
+INTEGER
+faculty_profiles
+Column
+Type
+Constraints
+id
+UUID
+PK
+profile_id
+UUID
+FK -> profiles(id), UNIQUE
+designation
+TEXT
+NOT NULL
+subjects
+TEXT[]
+teaching_areas
+TEXT[]
+academic_experience
+INTEGER
+research_experience
+INTEGER
+google_scholar
+TEXT
+orcid
+TEXT
+researchgate
+TEXT
+open_to_collaboration
+BOOLEAN
+DEFAULT true
+open_to_mentoring
+BOOLEAN
+DEFAULT true
+skills
+Column
+Type
+Constraints
+id
+UUID
+PK
+name
+TEXT
+UNIQUE, NOT NULL
+category
+TEXT
+NOT NULL
+created_at
+TIMESTAMPTZ
+DEFAULT now()
+user_skills
+Column
+Type
+Constraints
+id
+UUID
+PK
+user_id
+UUID
+FK -> users(id)
+skill_id
+UUID
+FK -> skills(id)
+proficiency
+TEXT
+CHECK (beginner, intermediate, advanced)
+evidence
+JSONB
+created_at
+TIMESTAMPTZ
+DEFAULT now()
+UNIQUE(user_id, skill_id)
+research_interests
+Column
+Type
+Constraints
+id
+UUID
+PK
+name
+TEXT
+UNIQUE, NOT NULL
+category
+TEXT
+NOT NULL
+user_interests
+Column
+Type
+Constraints
+id
+UUID
+PK
+user_id
+UUID
+FK -> users(id)
+interest_id
+UUID
+FK -> research_interests(id)
+created_at
+TIMESTAMPTZ
+DEFAULT now()
+UNIQUE(user_id, interest_id)
+projects
+Column
+Type
+Constraints
+id
+UUID
+PK
+owner_id
+UUID
+FK -> users(id)
+title
+TEXT
+NOT NULL
+short_description
+TEXT
+NOT NULL
+detailed_description
+TEXT
+problem_statement
+TEXT
+objectives
+TEXT[]
+research_domain
+TEXT[]
+required_skills
+TEXT[]
+required_roles
+JSONB
+team_size_min
+INTEGER
+DEFAULT 2
+team_size_max
+INTEGER
+DEFAULT 10
+duration
+TEXT
+difficulty
+TEXT
+CHECK (beginner, intermediate, advanced)
+project_type
+TEXT
+visibility
+TEXT
+CHECK (public, private, restricted)
+deadline
+DATE
+expected_outcomes
+TEXT
+mentor_required
+BOOLEAN
+DEFAULT false
+github_required
+BOOLEAN
+DEFAULT false
+tags
+TEXT[]
+status
+TEXT
+DEFAULT ‘open’, CHECK (open, closed, completed)
+created_at
+TIMESTAMPTZ
+DEFAULT now()
+updated_at
+TIMESTAMPTZ
+DEFAULT now()
+project_roles
+Column
+Type
+Constraints
+id
+UUID
+PK
+project_id
+UUID
+FK -> projects(id) ON DELETE CASCADE
+name
+TEXT
+NOT NULL
+description
+TEXT
+count
+INTEGER
+DEFAULT 1
+created_at
+TIMESTAMPTZ
+DEFAULT now()
+project_members
+Column
+Type
+Constraints
+id
+UUID
+PK
+project_id
+UUID
+FK -> projects(id) ON DELETE CASCADE
+user_id
+UUID
+FK -> users(id) ON DELETE CASCADE
+role_id
+UUID
+FK -> project_roles(id)
+system_role
+TEXT
+CHECK (owner, mentor, member)
+joined_at
+TIMESTAMPTZ
+DEFAULT now()
+status
+TEXT
+DEFAULT ‘active’, CHECK (active, removed, left)
+UNIQUE(project_id, user_id)
+join_requests
+Column
+Type
+Constraints
+id
+UUID
+PK
+project_id
+UUID
+FK -> projects(id) ON DELETE CASCADE
+applicant_id
+UUID
+FK -> users(id) ON DELETE CASCADE
+role_id
+UUID
+FK -> project_roles(id)
+motivation
+TEXT
+NOT NULL
+relevant_experience
+TEXT
+message
+TEXT
+status
+TEXT
+DEFAULT ‘pending’, CHECK (pending, accepted, rejected, withdrawn)
+ai_analysis_id
+UUID
+FK -> ai_analyses(id)
+created_at
+TIMESTAMPTZ
+DEFAULT now()
+updated_at
+TIMESTAMPTZ
+DEFAULT now()
+UNIQUE(project_id, applicant_id)
+ai_analyses
+Column
+Type
+Constraints
+id
+UUID
+PK
+type
+TEXT
+CHECK (compatibility, team_recommendation, skill_gap, project_summary)
+project_id
+UUID
+FK -> projects(id)
+user_id
+UUID
+FK -> users(id)
+input_context
+JSONB
+(sanitized)
+output_result
+JSONB
+(validated)
+model_used
+TEXT
+confidence
+TEXT
+created_at
+TIMESTAMPTZ
+DEFAULT now()
+expires_at
+TIMESTAMPTZ
+notifications
+Column
+Type
+Constraints
+id
+UUID
+PK
+user_id
+UUID
+FK -> users(id) ON DELETE CASCADE
+type
+TEXT
+NOT NULL
+title
+TEXT
+NOT NULL
+message
+TEXT
+NOT NULL
+link
+TEXT
+read
+BOOLEAN
+DEFAULT false
+created_at
+TIMESTAMPTZ
+DEFAULT now()
+activity_logs
+Column
+Type
+Constraints
+id
+UUID
+PK
+project_id
+UUID
+FK -> projects(id)
+user_id
+UUID
+FK -> users(id)
+action
+TEXT
+NOT NULL
+metadata
+JSONB
+created_at
+TIMESTAMPTZ
+DEFAULT now()
+reports
+Column
+Type
+Constraints
+id
+UUID
+PK
+reporter_id
+UUID
+FK -> users(id)
+reported_user_id
+UUID
+FK -> users(id)
+reported_project_id
+UUID
+FK -> projects(id)
+type
+TEXT
+NOT NULL
+description
+TEXT
+status
+TEXT
+DEFAULT ‘pending’, CHECK (pending, reviewed, resolved, dismissed)
+created_at
+TIMESTAMPTZ
+DEFAULT now()
+admin_actions
+Column
+Type
+Constraints
+id
+UUID
+PK
+admin_id
+UUID
+FK -> users(id)
+action
+TEXT
+NOT NULL
+target_type
+TEXT
+target_id
+UUID
+metadata
+JSONB
+created_at
+TIMESTAMPTZ
+DEFAULT now()
+43. BACKEND ARCHITECTURE
+43.1 Supabase Services
+Service
+Purpose
+Auth
+Registration, login, email verification, OAuth, session management
+PostgreSQL
+Primary database with RLS
+Storage
+File storage for photos, documents
+Edge Functions
+Server-side logic for AI, GitHub, notifications
+Realtime
+Live updates for notifications, activity, discussions
+43.2 Edge Functions
+Function
+Purpose
+Auth
+Input
+Output
+analyze-compatibility
+AI compatibility analysis
+Owner
+project_id, user_id
+JSON score + explanation
+analyze-profile
+AI profile analysis
+User
+user_id
+JSON skill confidence
+recommend-projects
+AI project recommendations
+User
+user_id
+JSON recommendations
+recommend-collaborators
+AI collaborator recommendations
+User
+user_id
+JSON recommendations
+recommend-team
+AI team formation
+Owner
+project_id
+JSON team recommendation
+analyze-skill-gap
+AI skill gap analysis
+Owner
+project_id
+JSON gaps + candidates
+ai-assistant
+AI project assistant
+Member
+project_id, query
+JSON response
+github-connect
+GitHub OAuth callback
+User
+code
+Store token
+github-sync
+Sync GitHub data
+User/System
+user_id or repo
+Fetch and store
+send-notification
+Send notification
+System
+user_id, type, data
+Create notification
+admin-action
+Admin operations
+Admin
+action, target
+Execute + log
+43.3 Edge Function Security
+JWT verification: Every function verifies the user’s JWT.
+Role check: Function checks user role/permissions.
+RLS enforcement: Database queries respect RLS.
+Input validation: All inputs validated before processing.
+Output sanitization: AI outputs sanitized before returning.
+Rate limiting: Functions rate-limited per user.
+Secrets: API keys stored in Supabase secrets, never in code.
+44. FRONTEND ARCHITECTURE
+44.1 Tech Stack
+Layer
+Technology
+Framework
+React 18+
+Language
+TypeScript
+Styling
+Tailwind CSS
+State Management
+React Context + TanStack Query
+Routing
+React Router v6
+Forms
+React Hook Form + Zod
+UI Components
+Headless UI / Radix UI
+Icons
+Lucide React
+Charts
+Recharts
+HTTP Client
+Supabase JS Client
+Deployment
+Vercel
+44.2 Project Structure
+src/  components/    ui/            Reusable UI components    auth/          Auth components    profile/       Profile components    projects/      Project components    project-room/  Project room components    ai/            AI components    admin/         Admin components  pages/    Landing.tsx    Login.tsx    Register.tsx    Onboarding.tsx    Dashboard.tsx    Projects.tsx    ProjectDetail.tsx    ProjectRoom.tsx    Profile.tsx    Explore.tsx    Admin.tsx    Settings.tsx  hooks/    useAuth.ts    useProfile.ts    useProjects.ts    useAI.ts    useNotifications.ts  lib/    supabase.ts    ai.ts    github.ts    utils.ts  types/    index.ts  context/    AuthContext.tsx    NotificationContext.tsx  styles/    globals.css
+44.3 Responsive Design
+Breakpoint
+Width
+Layout
+Mobile
+< 640px
+Single column, bottom nav
+Tablet
+640-1024px
+Two column, sidebar collapsible
+Desktop
+> 1024px
+Full layout, sidebar visible
+44.4 Accessibility
+Semantic HTML
+ARIA labels where needed
+Keyboard navigation
+Focus indicators
+Color contrast (WCAG AA)
+Screen reader support
+Form labels and error messages
+Skip navigation links
+45. AI ARCHITECTURE
+45.1 AI Service Layer
+The AI Service Layer exposes a single provider-agnostic interface (analyze, summarize, recommend) that routes to one of several backend providers — Gemini, OpenAI, or future providers — selected at configuration time.
+45.2 AI Provider Abstraction
+interface AIProvider {  name: string;  analyzeCompatibility(input: CompatibilityInput): Promise<CompatibilityOutput>;  analyzeProfile(input: ProfileInput): Promise<ProfileOutput>;  recommendProjects(input: RecommendInput): Promise<RecommendOutput>;  recommendCollaborators(input: RecommendInput): Promise<RecommendOutput>;  recommendTeam(input: TeamInput): Promise<TeamOutput>;  analyzeSkillGap(input: GapInput): Promise<GapOutput>;  summarize(input: SummaryInput): Promise<SummaryOutput>;}
+45.3 AI Provider Selection
+MVP: Use one provider (Gemini or OpenAI).
+Configuration: Provider selected via environment variable.
+Fallback: If primary provider fails, optionally try secondary.
+Cost tracking: Log token usage per call.
+45.4 Prompt Engineering
+Compatibility Analysis Prompt
+System: You are an academic collaboration compatibility analyzer.You must return ONLY valid JSON. Do not include markdown, code fences, or explanations outside JSON.User: Analyze the compatibility between this project and this candidate.PROJECT:- Title: {title}- Domain: {domain}- Required Skills: {skills}- Required Roles: {roles}- Difficulty: {difficulty}- Description: {sanitized_description}CANDIDATE:- Skills: {skills}- Research Interests: {interests}- Relevant Projects: {projects}- Preferred Role: {role}- Motivation: {motivation}- Evidence: {evidence_flags}Return JSON with this exact schema:{  "skill_match": number (0-100),  "interest_match": number (0-100),  "role_match": number (0-100),  "experience_match": number (0-100),  "strengths": string[],  "gaps": string[],  "reason": string,  "confidence": "high" | "medium" | "low"}
+Team Formation Prompt
+System: You are an academic team formation advisor.You must return ONLY valid JSON.User: Recommend a balanced team for this project.PROJECT:- Required Roles: {roles}- Required Skills: {skills}- Team Size: {min}-{max}APPLICANTS:{applicants_json}Rules:- Cover all required roles- Maximize skill coverage- Minimize skill duplication- Consider compatibility scores- Return JSON with team recommendationReturn JSON with this exact schema:{  "recommended_team": [    {      "role": string,      "candidate_id": string,      "candidate_name": string,      "compatibility_score": number,      "reason": string    }  ],  "team_skill_coverage": number (0-100),  "role_coverage": number (0-100),  "gaps": string[],  "reason": string,  "alternatives": [],  "confidence": "high" | "medium" | "low"}
+45.5 AI Security
+Risk
+Mitigation
+Prompt Injection
+Sanitize user inputs; use system prompts; validate outputs
+Indirect Prompt Injection
+Treat all user-generated content as untrusted; strip instructions
+Data Leakage
+Send minimum necessary data; no PII unless required
+Output Manipulation
+Validate JSON schema; clamp scores; sanitize text
+API Key Exposure
+Keys stored in Edge Function secrets, never frontend
+AI Abuse
+Rate limiting; usage quotas; admin monitoring
+Hallucination
+Require evidence-based reasoning; show confidence
+Bias
+Avoid using protected characteristics; focus on skills/interests
+46. AI DATA FLOW
+46.1 Compatibility Analysis Flow
+OWNER VIEWS APPLICANT              |              vEDGE FUNCTION: analyze-compatibility  1. Verify JWT  2. Check owner permission for project  3. Fetch project data (RLS enforced)  4. Fetch applicant data (RLS enforced)  5. Sanitize all text inputs  6. Build minimal context (no PII)  7. Call AI provider  8. Validate JSON response  9. Compute weighted final score  10. Store in ai_analyses  11. Return to frontend              |              vAI PROVIDERReceives: project requirements + candidate profile (minimal)Returns: JSON with sub-scores + reasoning              |              vVALIDATION LAYER  - JSON schema validation  - Score clamping (0-100)  - Text sanitization  - Required fields check              |              vFRONTENDDisplay scores, strengths, gaps, reason, disclaimer
+46.2 Team Formation Flow
+OWNER CLICKS "RECOMMEND TEAM"              |              vEDGE FUNCTION: recommend-team  1. Verify owner  2. Fetch project requirements  3. Fetch all applicants with compatibility scores  4. Filter applicants (> threshold)  5. Group by role  6. Run deterministic optimization for role assignment  7. Send top combinations to AI for qualitative review  8. Validate AI response  9. Store recommendation  10. Return to frontend              |              vDETERMINISTIC OPTIMIZATION  - Maximize role coverage  - Maximize skill coverage  - Minimize skill duplication  - Consider compatibility scores              |              vAI REVIEW  - Qualitative assessment of recommended team  - Alternative suggestions  - Gap identification              |              vFRONTENDDisplay recommended team + alternatives + reasoningOwner can accept/modify/reject
+47. AI PROMPT/DATA CONTEXT STRATEGY
+47.1 Data Minimization
+AI Feature
+Data Sent
+Data NOT Sent
+Compatibility
+Project req, candidate skills, interests, project titles
+Email, phone, institution, full GitHub data
+Project Rec
+User skills, interests, roles
+Personal info, private projects
+Collaborator Rec
+User skills, interests
+Email, phone, institution
+Team Formation
+Project req, applicant skills, scores
+Personal info, private data
+Skill Gap
+Team skills, project req
+Personal info
+Assistant
+Project data (authorized)
+Unauthorized data, other projects
+47.2 Context Construction
+Retrieve authorized data from database (RLS enforced).
+Filter to minimum necessary fields.
+Sanitize all text (strip HTML, limit length, remove injection attempts).
+Format as structured prompt.
+Send to AI provider.
+Validate response.
+Store only if needed.
+47.3 Prompt Injection Protection
+System prompt: Clearly define AI role and output format.
+Input sanitization: Strip/escape user-generated content.
+Output validation: Never trust AI output blindly.
+Context isolation: User content clearly marked as “data”, not “instructions”.
+No code execution: AI output never executed.
+Rate limiting: Prevent abuse.
+48. AI OUTPUT VALIDATION
+48.1 Validation Rules
+Field
+Rule
+Scores
+Number, 0-100, integer
+Strengths
+Array of strings, max 5, max 200 chars each
+Gaps
+Array of strings, max 5, max 200 chars each
+Reason
+String, max 1000 chars
+Confidence
+Enum: high, medium, low
+Team roles
+Must match project required roles
+Candidate IDs
+Must exist in applicant pool
+48.2 Validation Implementation
+Parse JSON (catch parse errors)
+Check required fields present
+Validate types
+Validate ranges
+Validate enums
+Sanitize text (strip HTML, limit length)
+Clamp scores to 0-100
+If validation fails: log error, return fallback (no AI score, show manual review), and notify admin if persistent.
+48.3 Fallback Behavior
+Failure
+Fallback
+AI unavailable
+Show “AI analysis unavailable. Please review manually.”
+Invalid JSON
+Retry once; if fails, show fallback
+Missing fields
+Use defaults; show partial result
+Scores out of range
+Clamp to 0-100
+Timeout
+Show fallback; allow retry
+49. SECURITY ARCHITECTURE
+49.1 Authentication Security
+Measure
+Description
+Supabase Auth
+Industry-standard auth
+Email verification
+Required before access
+Password hashing
+bcrypt (Supabase managed)
+Session tokens
+JWT with expiration
+Refresh tokens
+Secure rotation
+Rate limiting
+Login attempts limited
+Password policy
+Min 8 chars, complexity
+49.2 Authorization Security
+Measure
+Description
+RLS
+Row Level Security on all tables
+Role checks
+Edge Functions verify roles
+Project membership
+Checked before access
+Admin actions
+Logged and audited
+49.3 API Security
+Measure
+Description
+JWT verification
+Every Edge Function
+Input validation
+Zod schemas
+Output sanitization
+Strip dangerous content
+Rate limiting
+Per user, per function
+CORS
+Restricted origins
+Secrets
+Supabase secrets, never in code
+49.4 File Upload Security
+Measure
+Description
+File type validation
+Whitelist extensions
+File size limit
+Per type
+Malware scan
+Future: integrate scanner
+Storage RLS
+Access control per file
+Signed URLs
+Time-limited access
+49.5 AI Security
+Measure
+Description
+Prompt injection protection
+Sanitization, system prompts
+Output validation
+Schema validation
+Data minimization
+Only necessary data
+Rate limiting
+Per user AI calls
+Cost monitoring
+Track usage
+Admin oversight
+AI call logs
+49.6 GitHub Security
+Measure
+Description
+OAuth flow
+Standard GitHub OAuth
+Token storage
+Server-side encrypted
+Token scope
+Minimum required
+Token revocation
+User can disconnect
+No frontend exposure
+Tokens never sent to frontend
+49.7 Security Checklist
+All tables have RLS enabled
+All Edge Functions verify JWT
+All inputs validated
+All AI outputs validated
+API keys in secrets
+GitHub tokens encrypted
+Rate limiting enabled
+Audit logs for sensitive actions
+File uploads validated
+HTTPS enforced
+CORS configured
+XSS protection (React escapes by default)
+SQL injection protection (parameterized queries)
+CSRF protection (Supabase handles)
+Privilege escalation prevention (role checks)
+50. PRIVACY ARCHITECTURE
+50.1 Data Collection
+Data
+Purpose
+Required
+Public
+Email
+Authentication
+Yes
+No
+Name
+Profile
+Yes
+Yes
+Institution
+Profile
+Yes
+Yes
+Department
+Profile
+Yes
+Yes
+Skills
+Matching
+Yes
+Yes
+Interests
+Matching
+Yes
+Yes
+Projects
+Profile
+No
+Yes
+GitHub
+Evidence
+No
+Yes
+Availability
+Matching
+No
+Members
+AI Analysis
+Matching
+No
+Private
+50.2 Data Access
+Data
+User
+Owner
+Member
+Mentor
+Admin
+Own Profile
+Yes
+Yes
+Yes
+Yes
+Yes
+Public Profile
+Yes
+Yes
+Yes
+Yes
+Yes
+Private Profile
+No
+No
+No
+No
+Yes
+Project Details
+Yes
+Yes
+Yes
+Yes
+Yes
+Project Documents
+No
+Yes
+Yes
+Yes
+Yes
+Research Notes
+No
+Yes
+Yes
+Yes
+Yes
+AI Analysis
+No
+Yes
+No
+No
+Yes
+Notifications
+Yes
+Yes
+Yes
+Yes
+Yes
+50.3 Data Sent to AI
+Data
+Sent
+Not Sent
+Skills
+Yes
+Interests
+Yes
+Project Titles
+Yes
+Project Descriptions
+Yes (sanitized)
+Email
+Yes (withheld)
+Phone
+Yes (withheld)
+Institution
+Yes (withheld unless relevant)
+Full GitHub
+Yes (withheld)
+Private Documents
+Yes (withheld)
+50.4 Data Retention
+Data
+Retention
+Profile
+Until user deletes account
+Projects
+Until deleted by owner
+AI Analyses
+90 days (configurable)
+Notifications
+30 days
+Activity Logs
+1 year
+Audit Logs
+2 years
+Reports
+Until resolved + 1 year
+50.5 User Rights
+Right
+Implementation
+Access
+User can view all their data
+Correction
+User can edit profile
+Deletion
+User can delete account
+Portability
+User can export data (Phase 2)
+Objection
+User can opt out of AI analysis
+51. SUPABASE ARCHITECTURE
+51.1 Supabase Services Usage
+Service
+Usage
+Configuration
+Auth
+User registration, login, OAuth
+Email/password + GitHub OAuth
+PostgreSQL
+Primary database
+RLS enabled, indexes, constraints
+Storage
+Profile photos, documents
+Buckets: avatars, documents
+Edge Functions
+AI, GitHub, notifications
+Deno runtime
+Realtime
+Notifications, activity
+Subscriptions for live updates
+51.2 Supabase Project Structure
+Supabase Project  Auth    Users    Sessions    Providers (Email, GitHub)  Database    Tables (all entities)    Views (for complex queries)    Functions (DB functions)    Triggers (audit, notifications)    RLS Policies  Storage    avatars/ (profile photos)    documents/ (project files)  Edge Functions    analyze-compatibility/    analyze-profile/    recommend-projects/    recommend-collaborators/    recommend-team/    analyze-skill-gap/    ai-assistant/    github-connect/    github-sync/    send-notification/    admin-action/  Realtime    notifications    activity_logs
+51.3 Supabase Edge Function Pattern
+// Import Supabase clientimport { createClient } from '@supabase/supabase-js'// Create client with service role (for server-side)const supabase = createClient(  Deno.env.get('SUPABASE_URL')!,  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)// Verify JWTconst authHeader = req.headers.get('Authorization')!const { data: { user }, error } = await supabase.auth.getUser(authHeader)// Check permissions// Fetch data (RLS enforced)// Process// Return response
+52. GITHUB INTEGRATION ARCHITECTURE
+52.1 OAuth Flow
+User clicks "Connect GitHub"              |              vRedirect to GitHub OAuth (client_id, scope, state)              |              vUser authorizes on GitHub              |              vGitHub redirects to callback with code              |              vEdge Function: github-connect  - Exchange code for token  - Store token in secrets  - Fetch user profile  - Store connection in DB              |              vRedirect to profileShow connected status
+52.2 Token Storage
+Data
+Storage
+Security
+Access Token
+Supabase secrets (encrypted)
+Never exposed to frontend
+Refresh Token
+Supabase secrets
+If applicable
+Username
+Database (public)
+Visible on profile
+Repo metadata
+Database
+Visible per project settings
+52.3 GitHub API Calls
+All GitHub API calls go through Edge Functions: the frontend calls the Edge Function, which retrieves the token from secrets, makes the API call, caches/stores the response, and returns sanitized data to the frontend.
+52.4 GitHub Data Usage
+Data
+Usage
+Limitation
+Repositories
+Skill evidence
+Not proof of expertise
+Languages
+Skill verification
+Supporting evidence only
+Commits
+Activity indicator
+Not a skill measure
+PRs
+Collaboration evidence
+Supporting evidence
+Issues
+Problem-solving evidence
+Supporting evidence
+53. API / EDGE FUNCTION REQUIREMENTS
+53.1 Edge Function Specifications
+analyze-compatibility
+Property
+Value
+Name
+analyze-compatibility
+Purpose
+Generate AI compatibility score for applicant
+Auth
+JWT required
+Authorization
+Project owner or admin
+Input
+{ project_id: string, user_id: string }
+Output
+{ compatibility_score, skill_match, interest_match, role_match, experience_match, strengths, gaps, reason, confidence }
+Validation
+Project exists, user exists, user applied to project, owner has access
+Error Cases
+401 Unauthorized, 403 Forbidden, 404 Not Found, 422 Invalid Input, 503 AI Unavailable
+Dependencies
+AI provider, database
+Rate Limit
+10 calls/minute per user
+recommend-team
+Property
+Value
+Name
+recommend-team
+Purpose
+Recommend balanced team from applicants
+Auth
+JWT required
+Authorization
+Project owner or admin
+Input
+{ project_id: string }
+Output
+{ recommended_team, team_skill_coverage, role_coverage, gaps, reason, alternatives, confidence }
+Validation
+Project exists, has applicants, owner has access
+Error Cases
+401, 403, 404, 422, 503
+Dependencies
+AI provider, database
+Rate Limit
+5 calls/minute per user
+ai-assistant
+Property
+Value
+Name
+ai-assistant
+Purpose
+Project assistant queries
+Auth
+JWT required
+Authorization
+Project member, mentor, owner, or admin
+Input
+{ project_id: string, query: string }
+Output
+{ summary, priority_actions, risks, suggestions, confidence }
+Validation
+Project exists, user is member, query sanitized
+Error Cases
+401, 403, 404, 422, 503
+Dependencies
+AI provider, database
+Rate Limit
+20 calls/hour per user
+github-connect
+Property
+Value
+Name
+github-connect
+Purpose
+Handle GitHub OAuth callback
+Auth
+JWT required
+Authorization
+Self only
+Input
+{ code: string, state: string }
+Output
+{ connected: boolean, github_username: string }
+Validation
+Code valid, state matches
+Error Cases
+400 Invalid Code, 401 Unauthorized, 500 GitHub Error
+Dependencies
+GitHub API, Supabase secrets
+send-notification
+Property
+Value
+Name
+send-notification
+Purpose
+Send notification to user
+Auth
+Service role or JWT
+Authorization
+System or self
+Input
+{ user_id, type, title, message, link? }
+Output
+{ notification_id }
+Validation
+User exists, type valid
+Error Cases
+400 Invalid Input, 404 User Not Found
+Dependencies
+Database, Realtime
+54. ROLE-BASED ACCESS CONTROL
+54.1 RBAC Model
+The RBAC model defines three platform roles (Student, Faculty, Admin), four dynamic project roles (Owner — system-assigned; Mentor, Lead, and Member — assigned by the owner), and a fixed permission set including project:create, project:edit, project:delete, member:invite, member:remove, task:create, task:assign, doc:upload, doc:view, ai:analyze, ai:assistant, and admin:all.
+54.2 Permission Assignment
+Role
+Permissions
+Student
+project:create, task:create, doc:upload, doc:view, ai:assistant
+Faculty
+student perms + mentor:review
+Project Owner
+all project permissions
+Project Member
+task:create, doc:upload, doc:view, ai:assistant
+Mentor
+doc:view, ai:assistant, mentor:review
+Admin
+admin:all
+54.3 Permission Checks
+Frontend: Hide UI elements user can’t access.
+Edge Functions: Verify JWT and role before processing.
+Database: RLS enforces data access.
+55. ROW LEVEL SECURITY STRATEGY
+55.1 RLS Principles
+Default deny: No access unless explicitly granted.
+User-owned: Users can access their own data.
+Project-scoped: Project data accessible to members only.
+Role-based: Admin has elevated access.
+Service role: Edge Functions use service role for authorized operations.
+55.2 RLS Policies by Table
+users
+-- Users can read their own user recordCREATE POLICY "Users can view own user" ON users  FOR SELECT USING (auth.uid() = id);-- Users can update their own user recordCREATE POLICY "Users can update own user" ON users  FOR UPDATE USING (auth.uid() = id);-- Admins can view all usersCREATE POLICY "Admins can view all users" ON users  FOR SELECT USING (    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')  );
+profiles
+-- Public profiles visible to all authenticated usersCREATE POLICY "Public profiles visible" ON profiles  FOR SELECT USING (    visibility = 'public' OR user_id = auth.uid()  );-- Users can update own profileCREATE POLICY "Users can update own profile" ON profiles  FOR UPDATE USING (user_id = auth.uid());-- Users can insert own profileCREATE POLICY "Users can insert own profile" ON profiles  FOR INSERT WITH CHECK (user_id = auth.uid());
+projects
+-- Public projects visible to allCREATE POLICY "Public projects visible" ON projects  FOR SELECT USING (    visibility = 'public'    OR owner_id = auth.uid()    OR EXISTS (      SELECT 1 FROM project_members      WHERE project_id = projects.id AND user_id = auth.uid()    )  );-- Owners can update own projectsCREATE POLICY "Owners can update own projects" ON projects  FOR UPDATE USING (owner_id = auth.uid());-- Anyone can create projectsCREATE POLICY "Anyone can create projects" ON projects  FOR INSERT WITH CHECK (owner_id = auth.uid());
+join_requests
+-- Applicants can view own requestsCREATE POLICY "Applicants view own requests" ON join_requests  FOR SELECT USING (applicant_id = auth.uid());-- Project owners can view requests for their projectsCREATE POLICY "Owners view project requests" ON join_requests  FOR SELECT USING (    EXISTS (      SELECT 1 FROM projects      WHERE id = join_requests.project_id AND owner_id = auth.uid()    )  );-- Users can create own requestsCREATE POLICY "Users create own requests" ON join_requests  FOR INSERT WITH CHECK (applicant_id = auth.uid());-- Owners can update request statusCREATE POLICY "Owners update request status" ON join_requests  FOR UPDATE USING (    EXISTS (      SELECT 1 FROM projects      WHERE id = join_requests.project_id AND owner_id = auth.uid()    )  );
+ai_analyses
+-- Project owners can view analyses for their projectsCREATE POLICY "Owners view project analyses" ON ai_analyses  FOR SELECT USING (    EXISTS (      SELECT 1 FROM projects      WHERE id = ai_analyses.project_id AND owner_id = auth.uid()    )  );-- Users can view their own analysesCREATE POLICY "Users view own analyses" ON ai_analyses  FOR SELECT USING (user_id = auth.uid());-- Edge Functions can insert analyses (service role)CREATE POLICY "Service can insert analyses" ON ai_analyses  FOR INSERT WITH CHECK (true);
+notifications
+-- Users can view own notificationsCREATE POLICY "Users view own notifications" ON notifications  FOR SELECT USING (user_id = auth.uid());-- Users can update own notifications (mark read)CREATE POLICY "Users update own notifications" ON notifications  FOR UPDATE USING (user_id = auth.uid());
+documents
+-- Project members can view project documentsCREATE POLICY "Members view project documents" ON documents  FOR SELECT USING (    EXISTS (      SELECT 1 FROM project_members      WHERE project_id = documents.project_id AND user_id = auth.uid()    )  );-- Members can upload documentsCREATE POLICY "Members upload documents" ON documents  FOR INSERT WITH CHECK (    EXISTS (      SELECT 1 FROM project_members      WHERE project_id = documents.project_id AND user_id = auth.uid()    )  );
+55.3 RLS Testing
+Test
+Expected
+Non-member queries private project
+No rows
+Member queries private project
+Rows returned
+Owner queries own project
+Rows returned
+User queries other user’s private profile
+No rows
+User queries own profile
+Rows returned
+Admin queries any data
+Rows returned
+Applicant queries own application
+Rows returned
+Owner queries applications for own project
+Rows returned
+Non-owner queries applications
+No rows
+56. PERFORMANCE REQUIREMENTS
+56.1 Targets
+Metric
+Target
+Login
+< 2s
+Dashboard load
+< 3s
+Project list load
+< 2s
+Project detail load
+< 2s
+Search results
+< 1s
+AI compatibility analysis
+< 10s
+AI team recommendation
+< 15s
+File upload
+< 5s (10MB)
+Notification delivery
+< 1s (realtime)
+56.2 Optimization Strategies
+Strategy
+Description
+Indexing
+Indexes on FK, status, created_at
+Pagination
+Limit queries, cursor-based
+Caching
+Cache AI results, recommendations
+Lazy loading
+Load sections on demand
+Debouncing
+Search input debounced
+Background jobs
+AI analysis in background
+CDN
+Static assets via Vercel
+Database views
+Pre-computed joins
+56.3 Caching Strategy
+Data
+Cache
+TTL
+AI Compatibility
+Database
+7 days
+AI Recommendations
+Database
+24 hours
+User Profile
+Client
+5 minutes
+Project List
+Client
+1 minute
+Skills/Interests taxonomy
+Client
+1 hour
+57. SCALABILITY
+57.1 Scaling Dimensions
+Dimension
+MVP
+Phase 2
+Production
+Users
+100
+10,000
+1M+
+Projects
+50
+5,000
+500K+
+AI Calls/day
+100
+10,000
+1M+
+Storage
+1 GB
+100 GB
+TB+
+Institutions
+1
+10
+1000+
+57.2 Scaling Strategies
+Area
+Strategy
+Database
+Supabase scaling, read replicas, connection pooling
+AI
+Provider abstraction, caching, batch processing, rate limiting
+Storage
+Supabase Storage + CDN
+Search
+PostgreSQL FTS -> pgvector -> dedicated search
+Background Jobs
+Supabase Edge Functions -> queue system
+API
+Edge Functions -> dedicated API layer if needed
+Caching
+Redis (Phase 2+)
+57.3 When to Introduce External Backend
+Consider external backend (Node.js/FastAPI) when: - Complex background processing needed - Real-time features exceed Supabase Realtime - Custom ML models required - Third-party integrations multiply - Team needs more control over infrastructure
+58. RELIABILITY
+58.1 Reliability Targets
+Metric
+Target
+Uptime
+99.9%
+AI availability
+99% (with fallback)
+GitHub API availability
+99.9% (external)
+Data durability
+99.999999999% (Supabase)
+Recovery time
+< 1 hour
+58.2 Reliability Strategies
+Strategy
+Description
+Graceful degradation
+AI failure doesn’t break app
+Retry logic
+Retry transient failures
+Fallback
+Show cached/manual results
+Health checks
+Monitor services
+Backups
+Supabase automated backups
+Redundancy
+Multi-region if needed
+59. AI FAILURE HANDLING
+59.1 Failure Modes
+Failure
+Behavior
+AI API timeout
+Show “AI analysis unavailable. Please review manually.” Allow retry.
+AI API error (5xx)
+Retry once. If fails, show fallback.
+Invalid JSON
+Retry once with stricter prompt. If fails, show fallback.
+Missing fields
+Use defaults for missing fields. Show partial result.
+Rate limited
+Queue request. Show “Analysis in progress.”
+Cost limit reached
+Disable AI features. Show notice to admin.
+Provider down
+Switch to secondary provider (if configured).
+59.2 Fallback UI
+When AI analysis is unavailable, the UI displays a clear notice: “We couldn’t generate an AI compatibility score at this time,” followed by guidance that the owner can still review the applicant’s profile manually — their skills, interests, and experience — and make a decision based on the available information. Two actions are offered: “Retry AI Analysis” and “View Profile.”
+59.3 Retry Logic
+Attempt 1 calls the AI provider; on failure, wait 1 second and try Attempt 2; on failure, wait 3 seconds and try Attempt 3; if that also fails, show the fallback UI.
+60. AI COST OPTIMIZATION
+60.1 Cost Control Strategies
+Strategy
+Description
+Savings
+Caching
+Cache AI results, reuse valid analyses
+40-60%
+Database filtering
+Filter before AI, send only relevant candidates
+30-50%
+Structured prompts
+Concise, specific prompts
+20-30%
+Batch processing
+Batch similar requests
+10-20%
+On-demand
+Only analyze when requested
+50-70%
+Token limits
+Max tokens per request
+10-20%
+Provider choice
+Use cost-effective model for simple tasks
+30-50%
+60.2 Cost Monitoring
+Metric
+Tracking
+Tokens per call
+Logged
+Calls per user
+Rate limited
+Calls per feature
+Monitored
+Daily cost
+Admin dashboard
+Monthly cost
+Admin dashboard
+Cost per project
+Optional
+60.3 Rate Limiting
+Feature
+Limit
+Compatibility analysis
+10/min per user
+Team recommendation
+5/min per user
+AI assistant
+20/hour per user
+Profile analysis
+1/day per user
+Project recommendations
+10/hour per user
+61. LOGGING AND MONITORING
+61.1 Log Types
+Log Type
+Description
+Retention
+Error Logs
+Application errors
+90 days
+AI Logs
+AI calls, tokens, latency
+30 days
+Audit Logs
+Sensitive actions
+2 years
+Activity Logs
+Project activity
+1 year
+Access Logs
+API access
+30 days
+Security Logs
+Auth events
+1 year
+61.2 What to Log
+Event
+Log
+User registration
+Yes
+Login success/failure
+Yes
+Password reset
+Yes
+Project created
+Yes
+Project deleted
+Yes
+Member added/removed
+Yes
+Role changed
+Yes
+AI call made
+Yes
+AI call failed
+Yes
+Admin action
+Yes
+Report submitted
+Yes
+Suspicious activity
+Yes
+61.3 What NOT to Log
+Data
+Reason
+Passwords
+Security
+API keys
+Security
+GitHub tokens
+Security
+Full AI prompts
+Privacy
+Private user data
+Privacy
+Payment info
+Not applicable
+61.4 Monitoring Dashboard
+Metric
+Alert Threshold
+Error rate
+> 5%
+AI failure rate
+> 10%
+API latency
+> 5s
+Database connections
+> 80%
+Storage usage
+> 80%
+AI cost/day
+> budget
+Suspicious logins
+> 10/min
+62. TESTING STRATEGY
+62.1 Testing Levels
+Level
+Scope
+Tools
+Unit
+Functions, utilities
+Vitest
+Integration
+API, database
+Vitest + Supabase local
+E2E
+User flows
+Playwright
+RLS
+Data access
+Supabase test helpers
+AI
+Prompts, outputs
+Mock AI + validation tests
+Security
+Auth, injection
+OWASP ZAP, manual
+Performance
+Load, stress
+k6, Lighthouse
+UAT
+User acceptance
+Manual
+62.2 Test Coverage Targets
+Area
+Target
+Business logic
+80%
+API endpoints
+90%
+RLS policies
+100%
+AI validation
+100%
+Critical paths
+100%
+62.3 Test Cases by Feature
+Authentication
+Register with valid data
+Register with invalid email
+Register with weak password
+Login with valid credentials
+Login with invalid credentials
+Email verification flow
+Password reset flow
+Session persistence
+Logout
+Profile
+Create student profile
+Create faculty profile
+Edit profile
+Upload photo
+Add skills
+Add interests
+Connect GitHub
+Profile visibility
+Projects
+Create project
+Edit project
+Delete project
+Define roles
+Set visibility
+Search projects
+Filter projects
+Applications
+Apply to project
+Prevent duplicate application
+View applications (owner)
+Accept application
+Reject application
+Withdraw application
+AI
+Compatibility analysis returns valid JSON
+Scores in 0-100 range
+Explanation present
+Fallback on AI failure
+Rate limiting works
+Data minimization verified
+RLS
+Non-member cannot access private project
+Member can access private project
+User cannot access other user’s private data
+Admin can access all data
+Applicant can view own application
+Owner can view project applications
+GitHub
+OAuth flow completes
+Token stored securely
+Repos fetched
+Disconnect works
+Token not exposed to frontend
+Tasks
+Create task
+Assign task
+Update status
+Complete task
+Task permissions
+Notifications
+Notification created on event
+Notification displayed
+Mark as read
+Realtime delivery
+63. SECURITY TESTING
+63.1 Security Test Cases
+Test
+Expected
+SQL injection in search
+Sanitized, no data leak
+XSS in profile bio
+Escaped, no script execution
+CSRF on state-changing action
+Blocked
+Unauthorized API access
+401/403
+Privilege escalation
+Blocked
+File upload with .exe
+Blocked
+Oversized file upload
+Blocked
+Prompt injection in project desc
+AI ignores instructions
+Indirect prompt injection in doc
+AI ignores instructions
+GitHub token exposure
+Token never in frontend
+API key in frontend
+Not present
+Rate limit bypass
+Blocked
+Session fixation
+New session on login
+Brute force login
+Rate limited
+Enumeration attack
+Generic error messages
+Insecure direct object reference
+RLS blocks
+63.2 Security Tools
+Tool
+Purpose
+OWASP ZAP
+Automated scanning
+npm audit
+Dependency vulnerabilities
+Snyk
+Dependency scanning
+SonarQube
+Code quality
+Manual review
+Logic flaws
+64. AI TESTING
+64.1 AI Test Cases
+Test
+Expected
+Valid input -> valid output
+JSON with all fields
+Missing input fields
+Graceful handling
+Malicious input (prompt injection)
+AI ignores instructions
+Very long input
+Truncated safely
+AI returns invalid JSON
+Retry/fallback
+AI returns out-of-range scores
+Clamped
+AI returns missing fields
+Defaults applied
+AI returns inappropriate content
+Sanitized
+AI timeout
+Fallback shown
+AI rate limited
+Queue/notice
+Data minimization
+No PII sent
+Output validation
+All fields checked
+64.2 Prompt Testing
+Test
+Description
+Prompt injection
+Attempt to override system prompt
+Jailbreak
+Attempt to get non-JSON output
+Bias
+Test with diverse profiles
+Consistency
+Same input -> similar output
+Edge cases
+Empty fields, special chars
+64.3 AI Output Validation Tests
+Test
+Expected
+Missing compatibility_score
+Validation fails
+Score > 100
+Clamped to 100
+Score < 0
+Clamped to 0
+Strengths not array
+Validation fails
+Reason too long
+Truncated
+Confidence invalid
+Defaults to “low”
+65. EDGE CASES
+Edge Case
+Behavior
+User applies twice
+Blocked by unique constraint
+User leaves project
+Status changed to “left”
+Owner leaves project
+Transfer ownership or delete project
+Project becomes full
+Applications blocked
+Project closed
+Applications blocked
+Project deleted
+Members notified, data archived
+User changes skills
+AI analyses invalidated
+User disconnects GitHub
+Evidence removed from profile
+AI returns conflicting results
+Show both, flag for review
+AI unavailable
+Fallback to manual review
+Faculty account incomplete
+Prompt to complete profile
+Student profile incomplete
+Show completeness indicator
+Duplicate projects
+Warning on create, not blocked
+Unauthorized document access
+RLS blocks, 403
+Expired invitation
+Cannot accept
+Expired application
+Cannot apply after deadline
+User deleted account
+Content anonymized or deleted
+Project owner deleted
+Transfer or archive
+Mentor leaves project
+Notify owner, remove mentor role
+Multiple owners
+Not supported in MVP
+66. ERROR HANDLING
+66.1 Error Types
+Type
+HTTP
+User Message
+Validation
+422
+“Please check your input.”
+Auth
+401
+“Please log in.”
+Forbidden
+403
+“You don’t have access.”
+Not Found
+404
+“Resource not found.”
+Conflict
+409
+“This action conflicts with existing data.”
+Rate Limit
+429
+“Too many requests. Please wait.”
+Server Error
+500
+“Something went wrong. Please try again.”
+AI Error
+503
+“AI service is temporarily unavailable.”
+Network Error
+0
+“Network error. Check your connection.”
+66.2 Error Message Guidelines
+Human-readable: No technical jargon.
+Actionable: Tell user what to do.
+Non-revealing: Don’t expose internals.
+Consistent: Same error, same message.
+Localized: Support multiple languages (Phase 2).
+66.3 Error Logging
+{  "timestamp": "2025-01-15T10:30:00Z",  "level": "error",  "type": "AI_ERROR",  "message": "AI provider returned invalid JSON",  "context": {    "function": "analyze-compatibility",    "user_id": "uuid",    "project_id": "uuid"  },  "error": {    "name": "ValidationError",    "message": "Missing required field: compatibility_score"  }}
+67. MVP SCOPE
+67.1 MVP Features (P0)
+Authentication: Student registration, faculty registration, email verification, login/logout, password reset.
+Profile: Student profile (basic), faculty profile (basic), skills management, research interests, profile photo upload.
+Projects: Create project, edit project, view project, project discovery (search + filters), define required skills, define required roles, set visibility.
+Collaboration: Join request, accept/reject application, project members list, role assignment.
+Project Room: Overview section, team section, task management (basic), activity timeline, settings.
+AI: Compatibility score, explainable reasoning, AI disclaimer.
+Backend: Supabase Auth, PostgreSQL with RLS, Edge Functions for AI, Storage for photos.
+GitHub: Connect GitHub (OAuth), show GitHub username.
+Notifications: In-app notifications, key notification types.
+Admin: User management (basic), project moderation (basic).
+67.2 MVP Success Criteria
+User can register, verify email, and login
+User can create a profile with skills and interests
+User can create a project with required skills and roles
+User can discover projects via search
+User can apply to a project
+Owner can view applications with AI compatibility
+Owner can accept/reject applicants
+Accepted users can access project room
+Project room shows team, tasks, activity
+AI compatibility analysis works with fallback
+GitHub OAuth connects successfully
+RLS prevents unauthorized access
+No API keys exposed in frontend
+Responsive on mobile and desktop
+68. PHASE 2 FEATURES
+68.1 Phase 2 Features (P1)
+AI Enhancements: AI project recommendations, AI collaborator recommendations, AI skill-gap analysis, AI team formation, semantic search.
+Collaboration: Research workspace (notes, references), document management (upload, versioning), discussion threads, milestones, GitHub repository integration (project-level), advanced notifications, email notifications.
+Faculty: Mentor role, mentor dashboard, faculty-led projects, student mentorship requests.
+Admin: Advanced analytics, AI usage monitoring, audit logs, report management, suspicious activity detection.
+Profile: Publications, certifications, past projects, portfolio/LinkedIn links, profile visibility settings.
+Search: Advanced filters, saved searches, search suggestions.
+69. ADVANCED FEATURES
+69.1 Advanced Features (P2)
+AI: AI project assistant, meeting summarization, research document analysis, AI-generated progress reports, research direction suggestions, team optimization recommendations.
+Collaboration: Real-time collaborative editing (research notes), video meeting integration (link only), advanced GitHub analytics, contribution tracking, project templates.
+Platform: Institution-level features, cross-institution collaboration, multi-language support, advanced analytics dashboard, recommendation engine optimization.
+Integration: ORCID integration, Google Scholar integration, LinkedIn integration, calendar integration.
+70. FUTURE FEATURES
+70.1 Future Features (P3)
+Mobile app (React Native)
+AI-powered matching improvements (embeddings, fine-tuning)
+Institution admin dashboard
+Research output tracking (citations, h-index)
+Funding/grant matching
+Conference/Journal recommendations
+Peer review system
+Academic social feed
+API for third-party integrations
+White-label for institutions
+Advanced analytics (predictive)
+AI research assistant (deep integration)
+Cross-platform project sync
+Blockchain-based contribution verification (exploratory)
+71. OUT-OF-SCOPE FEATURES
+71.1 Explicitly Out of Scope for MVP
+Feature
+Reason
+Full social media
+Distracts from core mission
+Full GitHub replacement
+GitHub exists
+Full LMS
+Not an LMS
+Video conferencing
+Use external links
+Payment system
+Not monetized initially
+Mobile app
+Web-first
+Full academic publishing
+Complex, different domain
+Autonomous AI decisions
+Human-in-the-loop required
+Peer review system
+Phase 3+
+Email client
+Use notifications
+Calendar system
+Use external links
+Instant messaging
+Use discussions
+71.2 Out of Scope for Phase 2
+Feature
+Reason
+Video calls
+External integration later
+File editing
+External tools
+Advanced ML models
+LLM sufficient for MVP
+Blockchain
+No clear benefit
+Cryptocurrency
+Not relevant
+NFT certificates
+Not relevant
+72. DEVELOPMENT ROADMAP
+Phase 1: Foundation (Week 1-2)
+Project setup (React + TS + Tailwind + Supabase), database schema (all tables, RLS policies), auth setup (registration, login), landing page, environment config. Completion Criteria: User can register, verify email, login.
+Phase 2: Profiles (Week 3-4)
+Student profile, faculty profile, skills management, research interests, profile photo, profile completeness indicator. Completion Criteria: User can complete profile with skills and interests.
+Phase 3: Projects (Week 5-6)
+Project creation form, project discovery (search, filters, list), project detail view, project roles, project skills. Completion Criteria: User can create and discover projects.
+Phase 4: Applications (Week 7-8)
+Join request form, application list (owner view), accept/reject actions, member management, notifications for applications. Completion Criteria: User can apply, owner can accept/reject.
+Phase 5: Project Room (Week 9-10)
+Room layout (navigation, sections), team section, task management (CRUD, statuses), activity timeline, settings. Completion Criteria: Members can collaborate in project room.
+Phase 6: AI Compatibility (Week 11-12)
+Edge Function (analyze-compatibility), AI provider (Gemini or OpenAI), output validation (JSON schema), UI display (scores, strengths, gaps), fallback handling, caching. Completion Criteria: Owner sees AI compatibility for applicants.
+Phase 7: GitHub Integration (Week 13)
+OAuth flow (connect GitHub), token storage (secure secrets), profile display (GitHub username), disconnect. Completion Criteria: User can connect/disconnect GitHub.
+Phase 8: Admin & Polish (Week 14)
+Admin dashboard (user/project management), RLS audit (all policies tested), security audit (OWASP checklist), performance optimization, testing (unit, integration, E2E), deployment (Vercel + Supabase). Completion Criteria: MVP deployed and functional.
+Phase 9: AI Recommendations (Week 15-16)
+recommend-projects Edge Function, recommend-collaborators Edge Function, dashboard widgets, recommendation cache. Completion Criteria: Dashboard shows AI recommendations.
+Phase 10: Team Formation (Week 17-18)
+recommend-team Edge Function, skill-gap analysis Edge Function, UI (team recommendation display), owner controls (accept/modify). Completion Criteria: Owner can get team recommendations.
+Phase 11: Research Workspace (Week 19-20)
+Research notes (CRUD), references (CRUD), documents (upload, access control), discussions (threads, replies), milestones (CRUD). Completion Criteria: Team can manage research workspace.
+Phase 12: Advanced AI (Week 21-22)
+AI assistant (project assistant), summarization (discussion/progress summaries), semantic search (pgvector embeddings). Completion Criteria: AI assistant functional.
+Phase 13: Testing & Security (Week 23-24)
+Comprehensive testing (all levels), security audit (full OWASP), AI testing (prompt injection, validation), performance testing (load tests), UAT. Completion Criteria: All tests pass, security verified.
+Phase 14: Deployment & Launch (Week 25-26)
+Production deployment (Vercel + Supabase), monitoring (logging, alerts), documentation (user guide, API docs), launch (public release). Completion Criteria: Platform live and stable.
+73. AI-ASSISTED DEVELOPMENT STRATEGY
+73.1 Development Principles
+Modular development: Build and test one module at a time.
+AI-assisted, not AI-driven: Use AI for code generation, but review and test.
+Phased approach: Don’t build everything at once.
+Test-driven: Write tests alongside features.
+Security-first: Consider security at every step.
+Documentation: Document as you build.
+73.2 AI Development Workflow
+PHASE 1: DESIGN  - Define requirements (this PRD)  - Design database schema  - Design UI/UX (Figma)  - Define API contracts              |              vPHASE 2: IMPLEMENT  - Use AI to generate code for specific modules  - Review generated code  - Write unit tests  - Integrate with existing modules              |              vPHASE 3: TEST  - Run unit tests  - Run integration tests  - Test RLS policies  - Test AI features  - Fix issues              |              vPHASE 4: VERIFY  - Manual testing  - Security review  - Performance check  - User acceptance              |              vPHASE 5: INTEGRATE  - Merge to main  - Deploy to staging  - Test end-to-end  - Deploy to production
+73.3 AI Tool Usage
+Tool
+Usage
+ChatGPT/DeepSeek
+Code generation, debugging, documentation
+Google Antigravity
+Full-stack development, testing
+Figma
+UI/UX design
+Gemini/OpenAI
+AI features in the product
+Supabase
+Backend infrastructure
+73.4 Guidelines for AI-Assisted Development
+Never generate the entire app in one prompt.
+Always review AI-generated code.
+Always write tests for AI-generated code.
+Always check for security issues.
+Always verify AI output format.
+Never trust AI-generated secrets.
+Never expose API keys.
+74. DEPLOYMENT STRATEGY
+74.1 Environments
+Environment
+Purpose
+URL
+Development
+Local development
+localhost
+Staging
+Pre-production testing
+staging.domain.com
+Production
+Live users
+domain.com
+74.2 Deployment Architecture
+The deployment consists of a Frontend layer on Vercel (React + TypeScript + Tailwind CSS, per environment), a Backend layer on Supabase (Auth, PostgreSQL + RLS, Storage, Edge Functions, Realtime), and External Services (AI Provider — Gemini/OpenAI — and the GitHub API).
+74.3 Deployment Process
+Code push to GitHub
+CI/CD (GitHub Actions): run tests, build frontend, deploy to Vercel, apply Supabase migrations, deploy Edge Functions
+Smoke tests on staging
+Promote to production
+74.4 Rollback Strategy
+Frontend: Vercel instant rollback
+Database: Supabase migrations with down scripts
+Edge Functions: Versioned deployments
+Feature flags: Disable features without deployment
+75. ENVIRONMENT VARIABLES AND SECRETS
+75.1 Frontend-Safe Variables
+Variable
+Description
+Exposed
+VITE_SUPABASE_URL
+Supabase project URL
+Yes
+VITE_SUPABASE_ANON_KEY
+Supabase anonymous key
+Yes
+VITE_APP_URL
+Application URL
+Yes
+75.2 Server-Side Secrets (Never Exposed)
+Secret
+Description
+Storage
+SUPABASE_SERVICE_ROLE_KEY
+Supabase service role
+Supabase secrets
+AI_API_KEY
+Gemini/OpenAI API key
+Supabase secrets
+GITHUB_CLIENT_ID
+GitHub OAuth client ID
+Supabase secrets
+GITHUB_CLIENT_SECRET
+GitHub OAuth secret
+Supabase secrets
+GITHUB_TOKEN_ENCRYPTION_KEY
+For encrypting tokens
+Supabase secrets
+JWT_SECRET
+For custom JWT (if needed)
+Supabase secrets
+75.3 Environment Configuration
+Environment
+Supabase Project
+AI Provider
+GitHub App
+Development
+Dev project
+Test key
+Dev app
+Staging
+Staging project
+Staging key
+Staging app
+Production
+Prod project
+Prod key
+Prod app
+75.4 Secret Management
+Never commit secrets to Git.
+Never expose secrets in frontend.
+Always use environment variables.
+Always use Supabase secrets for Edge Functions.
+Rotate secrets periodically.
+Audit secret access.
+76. SUCCESS METRICS
+76.1 User Metrics
+Metric
+Target
+Measurement
+Registered users
+100 (MVP)
+Auth count
+Active users
+40% MAU
+Activity logs
+Profile completion
+> 70%
+Completeness field
+GitHub connection
+> 30%
+Connections count
+76.2 Project Metrics
+Metric
+Target
+Measurement
+Projects created
+50 (MVP)
+Projects count
+Projects completed
+> 20%
+Status = completed
+Average team size
+3-5
+Members count
+Project activity
+> 80% have activity
+Activity logs
+76.3 Collaboration Metrics
+Metric
+Target
+Measurement
+Join requests
+200
+Applications count
+Acceptance rate
+30-50%
+Accepted/total
+Team formation
+> 60% of projects
+Teams with > min members
+Tasks completed
+> 50%
+Completed/total
+76.4 AI Metrics
+Metric
+Target
+Measurement
+AI analyses
+500
+ai_analyses count
+Recommendation usage
+> 50%
+Users who view recs
+Recommendation acceptance
+> 20%
+Accepted/recs shown
+AI failure rate
+< 5%
+Failed/total calls
+AI cost/user
+< $0.10
+Cost tracking
+76.5 Engagement Metrics
+Metric
+Target
+Measurement
+Weekly active users
+> 40%
+Weekly activity
+Project updates
+> 3/week
+Activity logs
+Documents uploaded
+> 50 (MVP)
+Documents count
+Discussions
+> 100 posts
+Discussions count
+User retention (30d)
+> 30%
+Cohort analysis
+77. RISKS AND MITIGATION
+77.1 Technical Risks
+Risk
+Probability
+Impact
+Mitigation
+AI provider outage
+Medium
+High
+Fallback to manual; retry; secondary provider
+Database performance
+Low
+High
+Indexing, pagination, caching
+RLS misconfiguration
+Medium
+Critical
+Comprehensive RLS tests
+GitHub API limits
+Medium
+Medium
+Cache data; rate limit handling
+Edge Function cold start
+Medium
+Low
+Keep functions warm; optimize
+File storage limits
+Low
+Medium
+Monitor; upgrade plan
+Real-time scaling
+Low
+Medium
+Supabase handles; monitor
+77.2 AI Risks
+Risk
+Probability
+Impact
+Mitigation
+Hallucination
+Medium
+Medium
+Validation; confidence; human decision
+Bias
+Medium
+High
+Diverse testing; focus on skills
+Prompt injection
+Medium
+High
+Sanitization; system prompts; validation
+Data leakage
+Low
+Critical
+Data minimization; no PII
+Cost overrun
+Medium
+Medium
+Rate limiting; caching; monitoring
+Model deprecation
+Low
+Medium
+Provider abstraction
+Output inconsistency
+Medium
+Medium
+Validation; caching; retry
+77.3 Security Risks
+Risk
+Probability
+Impact
+Mitigation
+Unauthorized access
+Medium
+Critical
+RLS; JWT; role checks
+API key exposure
+Low
+Critical
+Secrets management; no frontend keys
+XSS
+Low
+High
+React escaping; input sanitization
+SQL injection
+Low
+Critical
+Parameterized queries; Supabase
+CSRF
+Low
+High
+Supabase handles; SameSite cookies
+Privilege escalation
+Low
+Critical
+Role checks; RLS
+File upload attack
+Medium
+High
+Type validation; size limit; scan
+Brute force
+Medium
+Medium
+Rate limiting; lockout
+Session hijacking
+Low
+High
+Secure cookies; HTTPS
+GitHub token theft
+Low
+Critical
+Encrypted storage; never frontend
+77.4 Product Risks
+Risk
+Probability
+Impact
+Mitigation
+Low adoption
+Medium
+High
+Focus on one institution; student ambassadors
+Poor user experience
+Medium
+High
+User testing; iterate
+AI distrust
+Medium
+Medium
+Explainable AI; transparency
+Spam/fake profiles
+Medium
+Medium
+Reporting; moderation; verification
+Feature creep
+High
+Medium
+Strict MVP scope; phased approach
+Team member churn
+Medium
+Medium
+Modular development; documentation
+77.5 Scalability Risks
+Risk
+Probability
+Impact
+Mitigation
+Database scaling
+Low
+High
+Supabase scaling; read replicas
+AI cost scaling
+Medium
+High
+Caching; rate limiting; cost monitoring
+Storage scaling
+Low
+Medium
+Supabase Storage; CDN
+Search scaling
+Medium
+Medium
+pgvector; dedicated search later
+Team scaling
+Medium
+Medium
+Documentation; modular architecture
+78. TECHNICAL CHALLENGES
+Challenge
+Description
+Solution
+AI output consistency
+LLMs can vary
+Validation; caching; structured prompts
+RLS complexity
+Many policies
+Comprehensive testing; helper functions
+Real-time updates
+Notifications, activity
+Supabase Realtime; optimistic updates
+File access control
+Per-project documents
+Storage RLS; signed URLs
+GitHub integration
+OAuth, tokens, API
+Edge Functions; encrypted storage
+Team formation algorithm
+Optimization problem
+Deterministic + AI review
+Semantic search
+Embeddings, vector search
+pgvector; hybrid search
+Cost control
+AI API costs
+Caching; filtering; rate limiting
+Cross-institution
+Multi-tenancy
+Phase 2; institution scoping
+79. AI RISKS AND LIMITATIONS
+79.1 Explicit AI Limitations
+AI can make mistakes. Compatibility scores are estimates, not facts.
+GitHub activity does not prove expertise. It is supporting evidence only.
+Self-declared skills may be inaccurate. AI cannot verify claims.
+AI recommendations must be explainable. Black-box scores are not acceptable.
+Final decisions remain with authorized humans. AI recommends, humans decide.
+AI must not discriminate. No use of gender, race, religion, etc.
+AI should not make high-impact academic decisions autonomously. Always human-in-the-loop.
+AI scores are not scientifically objective. Clearly labeled as AI-estimated.
+AI context is limited. Only authorized, minimal data is sent.
+AI provider may change. Abstraction layer allows provider swap.
+79.2 AI Disclaimer Text (UI)
+“This compatibility score is AI-estimated based on available profile information. It is not an objective measurement of a person’s ability, skill, or potential. Final decisions should be made by humans based on a holistic review.”
+80. SECURITY RISKS
+80.1 Top Security Risks
+Risk
+Severity
+Mitigation
+Unauthorized project access
+Critical
+RLS, membership checks
+API key exposure
+Critical
+Secrets management
+GitHub token theft
+Critical
+Encrypted storage, no frontend
+SQL injection
+Critical
+Parameterized queries
+XSS
+High
+React escaping, sanitization
+Privilege escalation
+High
+Role checks, RLS
+Prompt injection
+High
+Sanitization, system prompts
+File upload attack
+High
+Type validation, size limits
+Brute force
+Medium
+Rate limiting
+Session hijacking
+Medium
+HTTPS, secure cookies
+Enumeration
+Medium
+Generic error messages
+CSRF
+Medium
+Supabase handles
+80.2 Security Best Practices
+Principle of least privilege
+Defense in depth
+Fail securely
+Don’t trust user input
+Don’t trust AI output
+Keep secrets secret
+Log security events
+Regular audits
+Dependency updates
+Security headers
+81. FUTURE SCALABILITY
+81.1 Scaling Path
+Stage 1 — Single Institution (MVP): ~100 users, Supabase free tier, single AI provider.
+Stage 2 — Multi-Institution (Phase 2): ~10,000 users, Supabase Pro, AI provider abstraction, institution scoping, caching layer.
+Stage 3 — Large Platform (Production): 1M+ users, Supabase Enterprise/dedicated, multiple AI providers, dedicated search (pgvector/Elasticsearch), Redis caching, background job queue, external backend (Node.js/FastAPI) if needed, CDN for static assets, multi-region deployment.
+81.2 Scaling Considerations
+Area
+MVP
+Phase 2
+Production
+Database
+Single instance
+Read replicas
+Sharding
+AI
+Single provider
+Provider abstraction
+Multi-provider, fine-tuned models
+Search
+PostgreSQL FTS
+pgvector
+Dedicated search
+Storage
+Supabase Storage
+CDN
+Multi-region CDN
+Cache
+None
+Database cache
+Redis
+Jobs
+Edge Functions
+Queue system
+Distributed queue
+API
+Edge Functions
+Edge Functions
+Dedicated API layer
+Auth
+Supabase Auth
+Supabase Auth
+Supabase Auth + SSO
+82. FINAL PRODUCT ARCHITECTURE
+The final architecture consists of four layers:
+User (Browser) connects over HTTPS to the frontend.
+Frontend (React + TypeScript + Tailwind) exposes Landing, Auth, Dashboard, Projects Discovery, Project Room, Profile, Explore, AI Recs, Admin, Settings, and Notifications pages, communicating via the Supabase JS Client.
+Supabase Backend provides Supabase Auth (email/password, GitHub OAuth, email verification, password reset, session/JWT management); PostgreSQL with Row Level Security across Users/Profiles, Projects/Members, Tasks/Research, Documents/GitHub/Activity, and AI Analyses/Recs/Reports; Supabase Storage (avatars/, documents/); and Supabase Edge Functions (AI Service Layer, GitHub Integration, Notification Service, Admin Actions), which in turn call Gemini/OpenAI, the GitHub API, and Supabase Realtime.
+External Services — Vercel (frontend hosting), GitHub (OAuth, repositories), and the AI Provider (Gemini/OpenAI).
+83. FINAL END-TO-END WORKFLOW
+Student Journey: Register → Verify Email → Create Profile → Add Skills → Add Interests → Connect GitHub (optional) → Dashboard → Discover Projects → Apply to Project → AI Analysis → Owner Accepts → Access Project Room → Complete Tasks → Collaborate → Project Complete.
+Faculty Journey: Register → Verify Email → Create Faculty Profile → Add Expertise → Dashboard → Discover Projects → Request to Mentor OR Create Project → Mentor Project → Review Progress → Provide Feedback.
+Project Owner Journey: Create Project → Define Requirements → Define Roles → Publish → Receive Applications → AI Analyzes Candidates → View Compatibility → Review Explanations → Accept Members → Assign Roles → Create Tasks → Connect GitHub → Manage Research → Monitor Progress → Complete Project.
+Applicant Journey: Discover Project → View Details → Apply → AI Analysis → Owner Reviews → Accept/Reject → If Accepted: Project Room → Complete Tasks → Collaborate → Project Complete.
+Mentor Journey: Faculty Profile → Discover Projects → Request Mentor Role → Owner Approves → Access Project Room → Review Progress → Provide Feedback → Monitor Milestones → Project Complete.
+Admin Journey: Login → Admin Dashboard → Monitor Users/Projects → Review Reports → Take Action → View Analytics → Monitor AI Usage → Configure Platform.
+84. FINAL FEATURE PRIORITY MATRIX
+Feature
+Priority
+Phase
+Complexity
+Authentication
+P0
+MVP
+Low
+Student Onboarding
+P0
+MVP
+Low
+Faculty Onboarding
+P0
+MVP
+Low
+Profiles
+P0
+MVP
+Low
+Skills
+P0
+MVP
+Low
+Research Interests
+P0
+MVP
+Low
+Project Creation
+P0
+MVP
+Medium
+Project Discovery
+P0
+MVP
+Medium
+Join Requests
+P0
+MVP
+Low
+AI Compatibility
+P0
+MVP
+High
+Project Room
+P0
+MVP
+Medium
+Task Management
+P0
+MVP
+Medium
+Notifications
+P0
+MVP
+Low
+GitHub Connect
+P0
+MVP
+Medium
+Admin Dashboard
+P0
+MVP
+Medium
+RLS
+P0
+MVP
+High
+AI Recommendations
+P1
+Phase 2
+High
+Team Formation
+P1
+Phase 2
+High
+Skill Gap Analysis
+P1
+Phase 2
+Medium
+Research Workspace
+P1
+Phase 2
+Medium
+Documents
+P1
+Phase 2
+Medium
+Discussions
+P1
+Phase 2
+Medium
+Milestones
+P1
+Phase 2
+Low
+Mentor System
+P1
+Phase 2
+Medium
+Semantic Search
+P2
+Advanced
+High
+AI Assistant
+P2
+Advanced
+High
+Advanced Analytics
+P2
+Advanced
+Medium
+Institution Features
+P3
+Future
+High
+Mobile App
+P3
+Future
+High
+Peer Review
+P3
+Future
+High
+Funding Matching
+P3
+Future
+High
+85. FINAL DELIVERABLES SUMMARY
+85.1 One-Page Product Summary
+Product: AI-Powered Research Collaboration & Intelligent Team Formation Platform
+Problem: Students and researchers struggle to find suitable collaborators, leading to wasted time, unbalanced teams, and fragmented collaboration.
+Solution: A centralized platform combining researcher discovery, AI matching, team formation, project rooms, and GitHub integration.
+Target Users: Students, researchers, faculty, project leaders, administrators.
+Core Features: - Research-oriented profiles (student/faculty) - Project creation and discovery - AI-estimated compatibility scores with explanations - AI-recommended balanced teams - Private project rooms with tasks, research notes, documents, discussions - GitHub integration for evidence-based skill analysis - Admin dashboard for moderation and analytics
+Technology: - Frontend: React + TypeScript + Tailwind CSS - Backend: Supabase (Auth, PostgreSQL, RLS, Storage, Edge Functions) - AI: Gemini or OpenAI (provider-agnostic) - Deployment: Vercel + Supabase
+Principle: AI recommends, humans decide.
+85.2 Complete MVP Feature List
+Student registration and onboarding
+Faculty registration and onboarding
+Research-oriented profiles with skills and interests
+Project creation with required skills and roles
+Project discovery with search and filters
+Join request system
+AI compatibility analysis with explanations
+Accept/reject applications
+Project room with team, tasks, activity
+Task management with statuses
+In-app notifications
+GitHub OAuth connection
+Admin dashboard (basic)
+Row Level Security
+Responsive design
+85.3 Complete Advanced Feature List
+AI project recommendations
+AI collaborator recommendations
+AI team formation
+AI skill-gap analysis
+Research workspace (notes, references, experiments)
+Document management with access control
+Discussion threads with mentions
+Milestones tracking
+Mentor system
+Semantic search (pgvector)
+AI project assistant
+Advanced analytics
+Email notifications
+GitHub repository integration (project-level)
+Institution-level features
+85.4 Recommended Technology Stack
+Layer
+Technology
+Frontend
+React 18+, TypeScript, Tailwind CSS
+State
+React Context + TanStack Query
+Routing
+React Router v6
+Forms
+React Hook Form + Zod
+UI Components
+Headless UI / Radix UI
+Icons
+Lucide React
+Charts
+Recharts
+Backend
+Supabase
+Database
+PostgreSQL (Supabase)
+Auth
+Supabase Auth
+Storage
+Supabase Storage
+Server Logic
+Supabase Edge Functions
+Realtime
+Supabase Realtime
+AI
+Gemini API or OpenAI API
+GitHub
+GitHub OAuth + API
+Deployment
+Vercel + Supabase
+Version Control
+GitHub
+85.5 Complete Architecture Diagram
+See Section 82.
+85.6 Complete End-to-End User Workflow
+See Section 83.
+85.7 Development Phases in Exact Order
+Foundation (Week 1-2)
+Profiles (Week 3-4)
+Projects (Week 5-6)
+Applications (Week 7-8)
+Project Room (Week 9-10)
+AI Compatibility (Week 11-12)
+GitHub Integration (Week 13)
+Admin & Polish (Week 14)
+AI Recommendations (Week 15-16)
+Team Formation (Week 17-18)
+Research Workspace (Week 19-20)
+Advanced AI (Week 21-22)
+Testing & Security (Week 23-24)
+Deployment & Launch (Week 25-26)
+85.8 Top Technical Risks
+AI provider outage → Fallback to manual review
+RLS misconfiguration → Comprehensive RLS testing
+Database performance → Indexing, pagination, caching
+GitHub API limits → Cache data, rate limit handling
+Edge Function cold start → Keep warm, optimize
+85.9 Top Security Risks
+Unauthorized project access → RLS, membership checks
+API key exposure → Secrets management
+GitHub token theft → Encrypted storage, no frontend
+SQL injection → Parameterized queries
+XSS → React escaping, sanitization
+85.10 Top AI Risks
+Hallucination → Validation, confidence, human decision
+Prompt injection → Sanitization, system prompts
+Data leakage → Data minimization, no PII
+Cost overrun → Rate limiting, caching, monitoring
+Bias → Diverse testing, focus on skills
+85.11 Recommended First Development Step
+Step 1: Set up Supabase project. Step 2: Design and create database schema with RLS policies. Step 3: Set up React + TypeScript + Tailwind frontend with Supabase client. Step 4: Implement authentication (register, login, email verification). Step 5: Build student and faculty onboarding flows. Step 6: Implement profile creation and management. Step 7: Build project creation and discovery. Step 8: Implement join request system. Step 9: Build project room with team and tasks. Step 10: Implement AI compatibility analysis via Edge Function. Step 11: Add GitHub OAuth connection. Step 12: Build admin dashboard (basic). Step 13: Comprehensive testing (RLS, security, AI). Step 14: Deploy to Vercel + Supabase.
+END OF PRD
+Document Status: Complete Version: 2.0 Next Action: Begin Phase 1 development
+This PRD is the single source of truth for the AI-Powered Research Collaboration & Intelligent Team Formation Platform. It is designed to be implementation-ready for AI-assisted development tools such as Google Antigravity, while remaining technically realistic, secure, scalable, and suitable for both a university/hackathon project and future real-world expansion.
+Principle: AI recommends. Humans decide.
