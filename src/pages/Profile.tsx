@@ -12,7 +12,11 @@ import { Button } from "@/components/ui/Button";
 import { Card, Badge, Progress } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Field, Input, Textarea, Select } from "@/components/ui/Field";
+<<<<<<< Updated upstream
 import type { Profile as ProfileType, Project, ReportType } from "@/types";
+=======
+import type { ReportType, Proficiency } from "@/types";
+>>>>>>> Stashed changes
 import {
   Building2,
   GitBranch,
@@ -22,7 +26,12 @@ import {
   ShieldCheck,
   Flag,
   Sparkles,
+<<<<<<< Updated upstream
   Loader2,
+=======
+  Trash2,
+  Plus,
+>>>>>>> Stashed changes
 } from "lucide-react";
 
 export function Profile() {
@@ -56,6 +65,7 @@ export function Profile() {
   const [reportDetails, setReportDetails] = useState("");
   const [reportSuccess, setReportSuccess] = useState(false);
 
+<<<<<<< Updated upstream
   useEffect(() => {
     if (!targetUserId) return;
     let cancelled = false;
@@ -92,6 +102,17 @@ export function Profile() {
   }
 
   if (!profile) {
+=======
+  // Add Skill/Interest Modals
+  const [addSkillOpen, setAddSkillOpen] = useState(false);
+  const [newSkillName, setNewSkillName] = useState("");
+  const [newSkillProf, setNewSkillProf] = useState<Proficiency>("intermediate");
+
+  const [addInterestOpen, setAddInterestOpen] = useState(false);
+  const [newInterestName, setNewInterestName] = useState("");
+
+  if (!profile || !targetUser) {
+>>>>>>> Stashed changes
     return (
       <div className="flex h-96 flex-col items-center justify-center gap-4 text-center">
         <h2 className="font-serif text-2xl font-bold text-ink">Researcher Profile Not Found</h2>
@@ -157,6 +178,48 @@ export function Profile() {
     } catch (err: any) {
       alert(err?.message || "Failed to submit report");
     }
+  };
+
+  const handleAddSkill = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !newSkillName.trim()) return;
+    saveProfile(user.id, {
+      ...profile,
+      skills: [...profile.skills, { skill: newSkillName.trim(), proficiency: newSkillProf }]
+    });
+    setNewSkillName("");
+    setAddSkillOpen(false);
+    refresh();
+  };
+
+  const handleDeleteSkill = (skillName: string) => {
+    if (!user) return;
+    saveProfile(user.id, {
+      ...profile,
+      skills: profile.skills.filter(s => s.skill !== skillName)
+    });
+    refresh();
+  };
+
+  const handleAddInterest = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !newInterestName.trim()) return;
+    saveProfile(user.id, {
+      ...profile,
+      interests: [...profile.interests, newInterestName.trim()]
+    });
+    setNewInterestName("");
+    setAddInterestOpen(false);
+    refresh();
+  };
+
+  const handleDeleteInterest = (interestName: string) => {
+    if (!user) return;
+    saveProfile(user.id, {
+      ...profile,
+      interests: profile.interests.filter(i => i !== interestName)
+    });
+    refresh();
   };
 
   return (
@@ -251,14 +314,46 @@ export function Profile() {
           <Card className="p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-ink-100 pb-2">
               <h3 className="font-serif text-lg font-bold text-ink">Technical Skills</h3>
+<<<<<<< Updated upstream
               <Badge tone="navy"><Sparkles className="h-3 w-3 mr-1" /> Evidence-Assessed</Badge>
+=======
+              <div className="flex items-center gap-2">
+                <Badge tone="navy">
+                  <Sparkles className="h-3 w-3 mr-1" /> Evidence-Assessed
+                </Badge>
+                {isSelf && (
+                  <Button size="sm" variant="outline" onClick={() => setAddSkillOpen(true)}>
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Add
+                  </Button>
+                )}
+              </div>
+>>>>>>> Stashed changes
             </div>
             <div className="space-y-2.5">
               {profile.skills.map((s) => (
                 <div key={s.skill} className="space-y-1">
+<<<<<<< Updated upstream
                   <div className="flex justify-between text-xs">
                     <span className="font-medium text-ink">{s.skill}</span>
                     <span className="text-[11px] text-ink-500 uppercase tracking-wider capitalize">{s.proficiency}</span>
+=======
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-medium text-ink flex items-center gap-2">
+                      {s.skill}
+                      {isSelf && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteSkill(s.skill)}
+                          className="text-ink-400 hover:text-red-600 transition"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                    </span>
+                    <span className="text-[11px] text-ink-500 uppercase tracking-wider capitalize">
+                      {s.proficiency}
+                    </span>
+>>>>>>> Stashed changes
                   </div>
                   <Progress value={s.proficiency === "advanced" ? 95 : s.proficiency === "intermediate" ? 65 : 35} />
                 </div>
@@ -269,10 +364,36 @@ export function Profile() {
 
           {/* Research Interests */}
           <Card className="p-6 space-y-3">
+<<<<<<< Updated upstream
             <h3 className="font-serif text-lg font-bold text-ink">Research Interests</h3>
             <div className="flex flex-wrap gap-1.5">
               {profile.interests.map((int) => <Badge key={int} tone="brass">{int}</Badge>)}
               {profile.interests.length === 0 && <p className="text-xs text-ink-400 italic">No interests added yet.</p>}
+=======
+            <div className="flex items-center justify-between border-b border-ink-100 pb-2">
+              <h3 className="font-serif text-lg font-bold text-ink">Research Interests</h3>
+              {isSelf && (
+                <Button size="sm" variant="outline" onClick={() => setAddInterestOpen(true)}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add
+                </Button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {profile.interests.map((int) => (
+                <Badge key={int} tone="brass">
+                  {int}
+                  {isSelf && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteInterest(int)}
+                      className="ml-1 text-brass-700 hover:text-red-600 focus:outline-none"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </Badge>
+              ))}
+>>>>>>> Stashed changes
             </div>
           </Card>
 
@@ -461,6 +582,55 @@ export function Profile() {
               </div>
             </>
           )}
+        </form>
+      </Modal>
+
+      {/* Modals for Skills & Interests */}
+      <Modal open={addSkillOpen} onClose={() => setAddSkillOpen(false)} title="Add Technical Skill">
+        <form onSubmit={handleAddSkill} className="space-y-4">
+          <Field label="Skill Name">
+            <Input
+              required
+              placeholder="e.g., Python, React, Data Analysis"
+              value={newSkillName}
+              onChange={(e) => setNewSkillName(e.target.value)}
+            />
+          </Field>
+          <Field label="Proficiency Level">
+            <Select
+              value={newSkillProf}
+              onChange={(e) => setNewSkillProf(e.target.value as Proficiency)}
+            >
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+            </Select>
+          </Field>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" type="button" onClick={() => setAddSkillOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">Save Skill</Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal open={addInterestOpen} onClose={() => setAddInterestOpen(false)} title="Add Research Interest">
+        <form onSubmit={handleAddInterest} className="space-y-4">
+          <Field label="Domain / Interest">
+            <Input
+              required
+              placeholder="e.g., Machine Learning, Quantum Physics"
+              value={newInterestName}
+              onChange={(e) => setNewInterestName(e.target.value)}
+            />
+          </Field>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" type="button" onClick={() => setAddInterestOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">Save Interest</Button>
+          </div>
         </form>
       </Modal>
     </div>
