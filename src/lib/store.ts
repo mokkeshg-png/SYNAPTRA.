@@ -23,7 +23,6 @@ export function newRole(partial?: Partial<ProjectRole>): ProjectRole {
     openings: partial?.openings ?? 1,
   };
 }
-
 // Re-export everything from supabase-db so pages can gradually switch imports
 export {
   signIn as login,
