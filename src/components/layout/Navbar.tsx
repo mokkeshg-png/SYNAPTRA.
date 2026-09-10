@@ -19,6 +19,9 @@ import {
   CheckCheck,
   ChevronDown,
   Search,
+  Inbox,
+  MessageSquare,
+  FolderPlus,
 } from "lucide-react";
 
 export function Navbar() {
@@ -67,6 +70,8 @@ export function Navbar() {
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, authRequired: true },
     { name: "Explore Projects", href: "/projects", icon: Compass, authRequired: false },
     { name: "Find Collaborators", href: "/collaborators", icon: Users, authRequired: false },
+    { name: "Requests", href: "/requests", icon: Inbox, authRequired: true },
+    { name: "Messages", href: "/messages", icon: MessageSquare, authRequired: true },
     { name: "Search", href: "/search", icon: Search, authRequired: false },
     ...(profile?.role === "admin"
       ? [{ name: "Admin Center", href: "/admin", icon: Shield, authRequired: true }]
@@ -316,6 +321,33 @@ export function Navbar() {
                     </Link>
 
                     <Link
+                      to="/projects/new"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-xs text-ink-700 hover:bg-paper-100 font-medium text-navy"
+                    >
+                      <FolderPlus className="h-4 w-4 text-navy" />
+                      Create Project Team
+                    </Link>
+
+                    <Link
+                      to="/requests"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-xs text-ink-700 hover:bg-paper-100"
+                    >
+                      <Inbox className="h-4 w-4 text-ink-400" />
+                      Collaboration Requests
+                    </Link>
+
+                    <Link
+                      to="/messages"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-xs text-ink-700 hover:bg-paper-100"
+                    >
+                      <MessageSquare className="h-4 w-4 text-ink-400" />
+                      Messages & Team Chat
+                    </Link>
+
+                    <Link
                       to="/projects"
                       onClick={() => setUserMenuOpen(false)}
                       className="flex items-center gap-2 px-4 py-2 text-xs text-ink-700 hover:bg-paper-100"
@@ -432,16 +464,37 @@ export function Navbar() {
               <Link
                 to={`/profile/${user.id}`}
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 text-sm text-ink-700"
+                className="flex items-center gap-3 px-3 py-2 text-sm text-ink-700 hover:bg-paper-100"
               >
-                <User className="h-4 w-4" /> Academic Profile
+                <User className="h-4 w-4 text-ink-500" /> Academic Profile
+              </Link>
+              <Link
+                to="/projects/new"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2 text-sm font-semibold text-navy hover:bg-navy-50"
+              >
+                <FolderPlus className="h-4 w-4 text-navy" /> Create Project Team
+              </Link>
+              <Link
+                to="/requests"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2 text-sm text-ink-700 hover:bg-paper-100"
+              >
+                <Inbox className="h-4 w-4 text-ink-500" /> Requests
+              </Link>
+              <Link
+                to="/messages"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2 text-sm text-ink-700 hover:bg-paper-100"
+              >
+                <MessageSquare className="h-4 w-4 text-ink-500" /> Messages & Chat
               </Link>
               <Link
                 to="/settings"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 text-sm text-ink-700"
+                className="flex items-center gap-3 px-3 py-2 text-sm text-ink-700 hover:bg-paper-100"
               >
-                <Settings className="h-4 w-4" /> Settings
+                <Settings className="h-4 w-4 text-ink-500" /> Settings
               </Link>
               <button
                 onClick={() => {

@@ -40,6 +40,7 @@ import type {
   ReportType,
   NotificationType,
   DocumentAccess,
+  AiAnalysisRecord,
 } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -1740,4 +1741,140 @@ export async function getUserMembership(userId: string, projectId: string): Prom
 export function canAccessRoomSync(userId: string, projectId: string, members: ProjectMember[], role?: string): boolean {
   if (role === "admin") return true;
   return members.some(m => m.projectId === projectId && m.userId === userId && m.status === "active");
+}
+
+// ---------------------------------------------------------------------------
+// AI ANALYSES & PROJECT RECOMMENDATIONS
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetch cached, non-expired compatibility analyses from `ai_analyses` table for given user and projects.
+ */
+export async function fetchCachedProjectAnalyses(
+  userId: string,
+  projectIds: string[]
+): Promise<Map<string, AiAnalysisRecord>> {
+  const map = new Map<string, AiAnalysisRecord>();
+  if (!userId || projectIds.length === 0) return map;
+
+  try {
+    const { data, error } = await supabase!
+      .from("ai_analyses")
+      .select("*")
+      .eq("type", "compatibility")
+      .eq("user_id", userId)
+      .in("project_id", projectIds)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("fetchCachedProjectAnalyses error:", error.message);
+      return map;
+    }
+
+    for (const row of data ?? []) {
+      // Check if not expired
+      if (row.expires_at && new Date(row.expires_at).getTime() <= Date.now()) {
+        continue;
+      }
+      // If output_result is valid and contains match_score
+      if (
+        row.output_result &&
+        typeof row.output_result.match_score === "number" &&
+        !map.has(row.project_id)
+      ) {
+        map.set(row.project_id, {
+          id: row.id,
+          type: row.type,
+          project_id: row.project_id,
+          user_id: row.user_id,
+          input_context: row.input_context,
+          output_result: row.output_result,
+          model_used: row.model_used,
+          confidence: row.confidence,
+          created_at: row.created_at,
+          expires_at: row.expires_at,
+        });
+      }
+    }
+  } catch (err) {
+    console.error("fetchCachedProjectAnalyses unexpected error:", err);
+  }
+
+  return map;
+}
+
+/**
+ * Invoke the deployed analyze-project-fit Supabase Edge Function for a single project.
+ */
+export async function analyzeProjectFit(projectId: string): Promise<AiAnalysisRecord | null> {
+  try {
+    const { data, error } = await supabase!.functions.invoke("analyze-project-fit", {
+      body: { project_id: projectId },
+    });
+
+    if (error) {
+      console.error(`analyze-project-fit Edge Function error for project ${projectId}:`, error.message || error);
+      return null;
+    }
+
+    if (data?.analysis && data.analysis.output_result) {
+      return data.analysis as AiAnalysisRecord;
+    }
+
+    if (data?.error) {
+      console.error(`analyze-project-fit returned error for project ${projectId}:`, data.error);
+    }
+  } catch (err) {
+    console.error(`analyze-project-fit exception for project ${projectId}:`, err);
+  }
+
+  return null;
+}
+
+/**
+ * Coordinated cache-first loader for available research projects:
+ * 1. Queries ai_analyses for non-expired cached results.
+ * 2. For missing/expired projects, calls analyze-project-fit Edge Function.
+ * 3. Sorts all results by match_score descending.
+ */
+export async function getOrFetchProjectAnalyses(
+  userId: string,
+  candidateProjects: Project[]
+): Promise<{ project: Project; analysis: AiAnalysisRecord }[]> {
+  if (!userId || candidateProjects.length === 0) return [];
+
+  const projectMap = new Map(candidateProjects.map((p) => [p.id, p]));
+  const projectIds = candidateProjects.map((p) => p.id);
+
+  // 1. Check cache
+  const cachedMap = await fetchCachedProjectAnalyses(userId, projectIds);
+
+  // 2. Identify missing / expired
+  const missingProjectIds = projectIds.filter((pid) => !cachedMap.has(pid));
+
+  // 3. Fetch missing via Edge Function
+  if (missingProjectIds.length > 0) {
+    await Promise.allSettled(
+      missingProjectIds.map(async (pid) => {
+        const fresh = await analyzeProjectFit(pid);
+        if (fresh && fresh.output_result && typeof fresh.output_result.match_score === "number") {
+          cachedMap.set(pid, fresh);
+        }
+      })
+    );
+  }
+
+  // 4. Assemble and rank
+  const results: { project: Project; analysis: AiAnalysisRecord }[] = [];
+  for (const [pid, analysis] of cachedMap.entries()) {
+    const project = projectMap.get(pid);
+    if (project && typeof analysis.output_result?.match_score === "number") {
+      results.push({ project, analysis });
+    }
+  }
+
+  // Sort descending by match_score
+  return results.sort(
+    (a, b) => b.analysis.output_result.match_score - a.analysis.output_result.match_score
+  );
 }

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Input, Select } from "@/components/ui/Field";
 import { EmptyState } from "@/components/ui/Card";
 import { RESEARCH_DOMAINS, ALL_SKILLS } from "@/lib/taxonomies";
-import { PROJECT_TYPES } from "@/types";
+import { PROJECT_TYPES, ROLE_TEMPLATES } from "@/types";
 import { projectMatchBreakdown } from "@/lib/matching";
 import type { Project } from "@/types";
 import { Search, Plus, Compass, X, Loader2 } from "lucide-react";
@@ -20,6 +20,7 @@ export function Projects() {
   const [query, setQuery] = useState("");
   const [selectedDomain, setSelectedDomain] = useState<string>("all");
   const [selectedSkill, setSelectedSkill] = useState<string>("all");
+  const [selectedRole, setSelectedRole] = useState<string>("all");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"match" | "recent" | "deadline">("match");
@@ -43,16 +44,21 @@ export function Projects() {
           p.title.toLowerCase().includes(q) ||
           p.shortDescription.toLowerCase().includes(q) ||
           p.tags?.some((t) => t.toLowerCase().includes(q)) ||
-          p.requiredSkills.some((s) => s.toLowerCase().includes(q));
+          p.requiredSkills.some((s) => s.toLowerCase().includes(q)) ||
+          p.roles?.some((r) => r.name.toLowerCase().includes(q));
         if (!matchesQuery) return false;
       }
       if (selectedDomain !== "all" && !p.domains.includes(selectedDomain)) return false;
       if (selectedSkill !== "all" && !p.requiredSkills.includes(selectedSkill)) return false;
+      if (selectedRole !== "all") {
+        const hasRole = p.roles?.some((r) => r.name.toLowerCase() === selectedRole.toLowerCase() || r.name.toLowerCase().includes(selectedRole.toLowerCase()));
+        if (!hasRole) return false;
+      }
       if (selectedDifficulty !== "all" && p.difficulty !== selectedDifficulty) return false;
       if (selectedType !== "all" && p.type !== selectedType) return false;
       return true;
     });
-  }, [projects, query, selectedDomain, selectedSkill, selectedDifficulty, selectedType, profile?.role]);
+  }, [projects, query, selectedDomain, selectedSkill, selectedRole, selectedDifficulty, selectedType, profile?.role]);
 
   const sortedProjects = useMemo(() => {
     const list = [...filteredProjects];
@@ -76,10 +82,10 @@ export function Projects() {
 
   const clearFilters = () => {
     setQuery(""); setSelectedDomain("all"); setSelectedSkill("all");
-    setSelectedDifficulty("all"); setSelectedType("all");
+    setSelectedRole("all"); setSelectedDifficulty("all"); setSelectedType("all");
   };
 
-  const hasActiveFilters = query || selectedDomain !== "all" || selectedSkill !== "all" || selectedDifficulty !== "all" || selectedType !== "all";
+  const hasActiveFilters = query || selectedDomain !== "all" || selectedSkill !== "all" || selectedRole !== "all" || selectedDifficulty !== "all" || selectedType !== "all";
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
@@ -127,10 +133,14 @@ export function Projects() {
             </Select>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 pt-1">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 pt-1">
           <Select value={selectedDomain} onChange={(e) => setSelectedDomain(e.target.value)}>
             <option value="all">All Domains</option>
             {RESEARCH_DOMAINS.map((d) => <option key={d} value={d}>{d}</option>)}
+          </Select>
+          <Select value={selectedRole} onChange={(e) => setSelectedRole(e.target.value)}>
+            <option value="all">All Open Roles</option>
+            {ROLE_TEMPLATES.map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}
           </Select>
           <Select value={selectedSkill} onChange={(e) => setSelectedSkill(e.target.value)}>
             <option value="all">All Required Skills</option>

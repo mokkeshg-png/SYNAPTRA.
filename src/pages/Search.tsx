@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { fetchAllProfiles, fetchProjects } from "@/lib/supabase-db";
 import { Button } from "@/components/ui/Button";
@@ -17,11 +17,15 @@ function uniqueId(p: Profile) {
 
 export function Search() {
   const { profile: authProfile } = useAuth();
+  const [searchParams] = useSearchParams();
+  const initialTab = (searchParams.get("tab") as Tab) || "students";
+  const initialQuery = searchParams.get("q") || searchParams.get("domain") || "";
+
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<Tab>("students");
-  const [query, setQuery] = useState("");
+  const [tab, setTab] = useState<Tab>(["students", "faculty", "projects"].includes(initialTab) ? initialTab : "students");
+  const [query, setQuery] = useState(initialQuery);
   const [skillFilter, setSkillFilter] = useState("all");
   const [deptFilter, setDeptFilter] = useState("all");
 

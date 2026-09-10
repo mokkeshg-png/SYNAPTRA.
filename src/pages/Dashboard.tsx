@@ -11,14 +11,17 @@ import {
   fetchJoinRequests,
   fetchMentorshipRequests,
   reviewMentorship,
+  reviewApplication,
   withdrawApplication,
   fetchAllProfiles,
+  getOrFetchProjectAnalyses,
 } from "@/lib/supabase-db";
-import { recommendProjects, recommendCollaborators } from "@/lib/matching";
+import { recommendCollaborators } from "@/lib/matching";
 import { ProjectCard, PersonCard } from "@/components/projects/ProjectCard";
+import { AiProjectExplanation } from "@/components/projects/AiProjectExplanation";
 import { Button } from "@/components/ui/Button";
 import { Card, Badge, Progress } from "@/components/ui/Card";
-import type { Project, ProjectMember, JoinRequest, MentorshipRequest, Profile, Proficiency } from "@/types";
+import type { Project, ProjectMember, JoinRequest, MentorshipRequest, Profile, Proficiency, AiAnalysisRecord } from "@/types";
 import {
   Sparkles,
   Layers,
@@ -28,6 +31,12 @@ import {
   Building2,
   ArrowUpRight,
   Loader2,
+  Inbox,
+  MessageSquare,
+  Compass,
+  Wrench,
+  Check,
+  X,
 } from "lucide-react";
 
 export function Dashboard() {
@@ -39,6 +48,10 @@ export function Dashboard() {
   const [mentorshipRequests, setMentorshipRequests] = useState<MentorshipRequest[]>([]);
   const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // AI-powered Project Recommendations state
+  const [aiProjectRecommendations, setAiProjectRecommendations] = useState<{ project: Project; analysis: AiAnalysisRecord }[]>([]);
+  const [aiMatchingLoading, setAiMatchingLoading] = useState(false);
 
   const [addSkillOpen, setAddSkillOpen] = useState(false);
   const [newSkillName, setNewSkillName] = useState("");
@@ -123,6 +136,46 @@ export function Dashboard() {
   ]);
   const activeProjects = projects.filter((p) => activeProjectIds.has(p.id));
 
+  // Load AI project recommendations using Supabase cache + Edge Function
+  const activeProjectIdsKey = Array.from(activeProjectIds).sort().join(",");
+  const candidateProjectsLength = projects.length;
+
+  useEffect(() => {
+    if (!user || !profile || loading) return;
+    let cancelled = false;
+
+    const candidateProjects = projects.filter(
+      (p) => p.status === "open" && p.visibility !== "private" && !activeProjectIds.has(p.id)
+    );
+
+    if (candidateProjects.length === 0) {
+      setAiProjectRecommendations([]);
+      return;
+    }
+
+    async function loadAiRecs() {
+      setAiMatchingLoading(true);
+      try {
+        const ranked = await getOrFetchProjectAnalyses(user!.id, candidateProjects);
+        if (!cancelled) {
+          setAiProjectRecommendations(ranked);
+        }
+      } catch (err) {
+        console.error("Failed to load AI project recommendations:", err);
+      } finally {
+        if (!cancelled) {
+          setAiMatchingLoading(false);
+        }
+      }
+    }
+
+    loadAiRecs();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, loading, candidateProjectsLength, activeProjectIdsKey]);
+
   const submittedApplications = joinRequests.filter(
     (jr) => jr.applicantId === user.id
   );
@@ -134,8 +187,7 @@ export function Dashboard() {
     (mr) => mr.facultyId === user.id && mr.status === "pending"
   );
 
-  // AI recommendations
-  const recommendedProjects = recommendProjects(profile, projects, [...activeProjectIds]).slice(0, 3);
+  // Collaborator recommendations
   const sharedIds = new Set<string>(
     members.filter((m) => activeProjectIds.has(m.projectId)).map((m) => m.userId)
   );
@@ -164,28 +216,70 @@ export function Dashboard() {
     refresh();
   };
 
-  const handleAddSkill = (e: React.FormEvent) => {
+  const handleAddSkill = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSkillName.trim()) return;
-    saveProfile(user.id, {
+    const exists = profile.skills.some((s) => s.skill.toLowerCase() === newSkillName.trim().toLowerCase());
+    if (exists) {
+      alert("Skill already added to your profile.");
+      return;
+    }
+    const updated = [...profile.skills, { skill: newSkillName.trim(), proficiency: newSkillProf }];
+    await saveProfile(user.id, {
       ...profile,
-      skills: [...profile.skills, { skill: newSkillName.trim(), proficiency: newSkillProf }]
+      skills: updated,
     });
     setNewSkillName("");
-    setAddSkillOpen(false);
     refresh();
   };
 
-  
-  const handleAddInterest = (e: React.FormEvent) => {
+  const handleRemoveSkill = async (skillName: string) => {
+    const updated = profile.skills.filter((s) => s.skill !== skillName);
+    await saveProfile(user.id, {
+      ...profile,
+      skills: updated,
+    });
+    refresh();
+  };
+
+  const handleUpdateSkillProf = async (skillName: string, prof: Proficiency) => {
+    const updated = profile.skills.map((s) => s.skill === skillName ? { ...s, proficiency: prof } : s);
+    await saveProfile(user.id, {
+      ...profile,
+      skills: updated,
+    });
+    refresh();
+  };
+
+  const handleAddInterest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newInterestName.trim()) return;
-    saveProfile(user.id, {
+    const exists = profile.interests.some((i) => i.toLowerCase() === newInterestName.trim().toLowerCase());
+    if (exists) {
+      alert("Interest already added to your profile.");
+      return;
+    }
+    const updated = [...profile.interests, newInterestName.trim()];
+    await saveProfile(user.id, {
       ...profile,
-      interests: [...profile.interests, newInterestName.trim()]
+      interests: updated,
     });
     setNewInterestName("");
-    setAddInterestOpen(false);
+    refresh();
+  };
+
+  const handleRemoveInterest = async (interest: string) => {
+    const updated = profile.interests.filter((i) => i !== interest);
+    await saveProfile(user.id, {
+      ...profile,
+      interests: updated,
+    });
+    refresh();
+  };
+
+  const handleReviewJoinApp = async (reqId: string, decision: "accepted" | "rejected") => {
+    await reviewApplication(user.id, reqId, decision);
+    setJoinRequests((prev) => prev.map((jr) => jr.id === reqId ? { ...jr, status: decision } : jr));
     refresh();
   };
 
@@ -221,6 +315,80 @@ export function Dashboard() {
             <Button variant="outline"><Sparkles className="h-4 w-4" /> Browse Directory</Button>
           </Link>
         </div>
+      </div>
+
+      {/* Quick Action Navigation Hub */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+        <button
+          onClick={() => setAddSkillOpen(true)}
+          className="flex flex-col items-center justify-center p-3 rounded-xl border border-ink-100 bg-white hover:border-navy hover:bg-navy-50/30 transition-all text-center group shadow-2xs"
+        >
+          <div className="h-8 w-8 rounded-lg bg-navy-50 text-navy flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
+            <Wrench className="h-4 w-4" />
+          </div>
+          <span className="font-semibold text-xs text-ink">My Skills</span>
+          <span className="text-[10px] text-ink-400">{profile.skills.length} mapped</span>
+        </button>
+
+        <Link
+          to="/projects/new"
+          className="flex flex-col items-center justify-center p-3 rounded-xl border border-ink-100 bg-white hover:border-navy hover:bg-navy-50/30 transition-all text-center group shadow-2xs"
+        >
+          <div className="h-8 w-8 rounded-lg bg-brass-50 text-brass-800 flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
+            <FolderPlus className="h-4 w-4" />
+          </div>
+          <span className="font-semibold text-xs text-ink">Create Project</span>
+          <span className="text-[10px] text-ink-400">Assemble team</span>
+        </Link>
+
+        <Link
+          to="/projects"
+          className="flex flex-col items-center justify-center p-3 rounded-xl border border-ink-100 bg-white hover:border-navy hover:bg-navy-50/30 transition-all text-center group shadow-2xs"
+        >
+          <div className="h-8 w-8 rounded-lg bg-paper-100 text-ink flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
+            <Compass className="h-4 w-4 text-ink-600" />
+          </div>
+          <span className="font-semibold text-xs text-ink">Find Projects</span>
+          <span className="text-[10px] text-ink-400">Match skills</span>
+        </Link>
+
+        <Link
+          to="/collaborators"
+          className="flex flex-col items-center justify-center p-3 rounded-xl border border-ink-100 bg-white hover:border-navy hover:bg-navy-50/30 transition-all text-center group shadow-2xs"
+        >
+          <div className="h-8 w-8 rounded-lg bg-paper-100 text-ink flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
+            <Users className="h-4 w-4 text-ink-600" />
+          </div>
+          <span className="font-semibold text-xs text-ink">Find People</span>
+          <span className="text-[10px] text-ink-400">Students & Faculty</span>
+        </Link>
+
+        <Link
+          to="/requests"
+          className="flex flex-col items-center justify-center p-3 rounded-xl border border-ink-100 bg-white hover:border-navy hover:bg-navy-50/30 transition-all text-center group shadow-2xs relative"
+        >
+          <div className="h-8 w-8 rounded-lg bg-navy-50 text-navy flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
+            <Inbox className="h-4 w-4" />
+          </div>
+          <span className="font-semibold text-xs text-ink">Requests Hub</span>
+          <span className="text-[10px] text-ink-400">
+            {receivedApplications.length > 0 ? `${receivedApplications.length} pending review` : "Manage status"}
+          </span>
+          {receivedApplications.length > 0 && (
+            <span className="absolute top-2 right-2 flex h-2 w-2 rounded-full bg-red-600 ring-2 ring-white" />
+          )}
+        </Link>
+
+        <Link
+          to="/messages"
+          className="flex flex-col items-center justify-center p-3 rounded-xl border border-ink-100 bg-white hover:border-navy hover:bg-navy-50/30 transition-all text-center group shadow-2xs"
+        >
+          <div className="h-8 w-8 rounded-lg bg-paper-100 text-ink flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
+            <MessageSquare className="h-4 w-4 text-ink-600" />
+          </div>
+          <span className="font-semibold text-xs text-ink">Team Messages</span>
+          <span className="text-[10px] text-ink-400">Active rooms</span>
+        </Link>
       </div>
 
       {/* Profile Completeness Alert */}
@@ -292,11 +460,16 @@ export function Dashboard() {
       {/* Received Join Applications */}
       {receivedApplications.length > 0 && (
         <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <h2 className="font-serif text-xl font-bold text-ink">
-              Incoming Join Applications ({receivedApplications.length})
-            </h2>
-            <Badge tone="navy">Project Owner Review</Badge>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h2 className="font-serif text-xl font-bold text-ink">
+                Incoming Join Applications ({receivedApplications.length})
+              </h2>
+              <Badge tone="navy">Action Required</Badge>
+            </div>
+            <Link to="/requests" className="text-xs font-semibold text-navy hover:underline">
+              View in Requests Hub →
+            </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {receivedApplications.map((req) => {
@@ -304,10 +477,12 @@ export function Dashboard() {
               const applicant = allProfiles.find((pr) => pr.userId === req.applicantId);
               const role = project?.roles.find((r) => r.id === req.selectedRoleId);
               return (
-                <Card key={req.id} className="p-4 space-y-3 border-navy-200">
+                <Card key={req.id} className="p-4 space-y-3 border-navy-200 shadow-sm">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="font-serif font-bold text-ink text-base">{applicant?.fullName}</h4>
+                      <Link to={`/profile/${applicant?.userId}`} className="font-serif font-bold text-ink text-base hover:underline">
+                        {applicant?.fullName}
+                      </Link>
                       <p className="text-xs text-ink-500">
                         Applying for: <strong>{role?.name || "Member"}</strong> on <em>{project?.title}</em>
                       </p>
@@ -316,13 +491,21 @@ export function Dashboard() {
                       <Badge tone="navy">{req.analysis.compatibilityScore}% AI Match</Badge>
                     )}
                   </div>
-                  <p className="text-xs text-ink-600 line-clamp-2">
+                  <p className="text-xs text-ink-600 line-clamp-2 bg-paper-50 p-2.5 rounded border border-ink-100">
                     <strong>Motivation:</strong> {req.motivation}
                   </p>
-                  <div className="flex items-center justify-end gap-2 pt-2">
-                    <Link to={`/projects/${project?.id}`}>
-                      <Button size="sm" variant="outline">Review in Project →</Button>
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-ink-100">
+                    <Link to={`/profile/${applicant?.userId}`} className="text-xs text-ink-500 hover:underline">
+                      View Profile
                     </Link>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handleReviewJoinApp(req.id, "rejected")} className="text-red-700 hover:bg-red-50 text-xs">
+                        <X className="h-3.5 w-3.5 mr-1" /> Decline
+                      </Button>
+                      <Button size="sm" onClick={() => handleReviewJoinApp(req.id, "accepted")} className="text-xs">
+                        <Check className="h-3.5 w-3.5 mr-1" /> Accept
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               );
@@ -464,15 +647,32 @@ export function Dashboard() {
             View all projects <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {recommendedProjects.length === 0 ? (
-            <p className="text-xs text-ink-400 col-span-3 text-center py-6">No recommendations yet — complete your profile to improve matching.</p>
-          ) : (
-            recommendedProjects.map(({ project, matchScore }) => (
-              <ProjectCard key={project.id} project={project} match={matchScore} viewer={profile} />
-            ))
-          )}
-        </div>
+        {aiMatchingLoading && aiProjectRecommendations.length === 0 ? (
+          <div className="rounded-2xl border border-navy-100 bg-navy-50/20 p-8 text-center space-y-3">
+            <Loader2 className="h-7 w-7 animate-spin text-navy mx-auto" />
+            <h4 className="font-serif font-bold text-ink text-base">AI is analyzing your project matches...</h4>
+            <p className="text-xs text-ink-500 max-w-md mx-auto">
+              Evaluating your technical skills, research interests, past projects, and experience against active campus initiatives.
+            </p>
+          </div>
+        ) : aiProjectRecommendations.length === 0 ? (
+          <p className="text-xs text-ink-400 col-span-3 text-center py-6">
+            No recommendations yet — complete your profile or add more skills to improve matching.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {aiProjectRecommendations.slice(0, 3).map(({ project, analysis }) => (
+              <div key={project.id} className="flex flex-col justify-between">
+                <ProjectCard
+                  project={project}
+                  match={analysis.output_result.match_score}
+                  viewer={profile}
+                />
+                <AiProjectExplanation analysis={analysis.output_result} defaultExpanded={false} />
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* AI Recommended Collaborators */}
@@ -502,53 +702,130 @@ export function Dashboard() {
         </div>
       </section>
 
-      {/* Modals for Skills & Interests */}
-      <Modal open={addSkillOpen} onClose={() => setAddSkillOpen(false)} title="Add Technical Skill">
-        <form onSubmit={handleAddSkill} className="space-y-4">
-          <Field label="Skill Name">
-            <Input
-              required
-              placeholder="e.g., Python, React, Data Analysis"
-              value={newSkillName}
-              onChange={(e) => setNewSkillName(e.target.value)}
-            />
-          </Field>
-          <Field label="Proficiency Level">
-            <Select
-              value={newSkillProf}
-              onChange={(e) => setNewSkillProf(e.target.value as Proficiency)}
-            >
-              <option value="beginner">Beginner</option>
-              <option value="intermediate">Intermediate</option>
-              <option value="advanced">Advanced</option>
-            </Select>
-          </Field>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" type="button" onClick={() => setAddSkillOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit">Save Skill</Button>
+      {/* Modals for Skills & Interests Management */}
+      <Modal open={addSkillOpen} onClose={() => setAddSkillOpen(false)} title="Manage Technical Skills">
+        <div className="space-y-6">
+          {/* Current Skills List */}
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-ink-500 mb-2">
+              Your Current Mapped Skills ({profile.skills.length})
+            </h4>
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+              {profile.skills.length === 0 ? (
+                <p className="text-xs text-ink-400 italic">No skills added yet.</p>
+              ) : (
+                profile.skills.map((s) => (
+                  <div key={s.skill} className="flex items-center justify-between gap-2 p-2.5 rounded-lg border border-ink-100 bg-paper-50">
+                    <span className="font-semibold text-xs text-ink">{s.skill}</span>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={s.proficiency}
+                        onChange={(e) => handleUpdateSkillProf(s.skill, e.target.value as Proficiency)}
+                        className="text-[11px] rounded border border-ink-200 bg-white px-2 py-1 text-ink-700"
+                      >
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSkill(s.skill)}
+                        className="p-1 text-ink-400 hover:text-red-600 rounded"
+                        title="Remove skill"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        </form>
+
+          {/* Add New Skill Form */}
+          <form onSubmit={handleAddSkill} className="space-y-3 pt-3 border-t border-ink-100">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-ink-500">
+              Add New Technical Skill
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label="Skill Name">
+                <Input
+                  required
+                  placeholder="e.g., Python, React, PyTorch"
+                  value={newSkillName}
+                  onChange={(e) => setNewSkillName(e.target.value)}
+                />
+              </Field>
+              <Field label="Proficiency Level">
+                <Select
+                  value={newSkillProf}
+                  onChange={(e) => setNewSkillProf(e.target.value as Proficiency)}
+                >
+                  <option value="beginner">Beginner</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="advanced">Advanced</option>
+                </Select>
+              </Field>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" type="button" onClick={() => setAddSkillOpen(false)}>
+                Done
+              </Button>
+              <Button type="submit">+ Add to Profile</Button>
+            </div>
+          </form>
+        </div>
       </Modal>
 
-      <Modal open={addInterestOpen} onClose={() => setAddInterestOpen(false)} title="Add Research Interest">
-        <form onSubmit={handleAddInterest} className="space-y-4">
-          <Field label="Domain / Interest">
-            <Input
-              required
-              placeholder="e.g., Machine Learning, Quantum Physics"
-              value={newInterestName}
-              onChange={(e) => setNewInterestName(e.target.value)}
-            />
-          </Field>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" type="button" onClick={() => setAddInterestOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit">Save Interest</Button>
+      <Modal open={addInterestOpen} onClose={() => setAddInterestOpen(false)} title="Manage Research Interests">
+        <div className="space-y-6">
+          {/* Current Interests */}
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-ink-500 mb-2">
+              Current Research Interests ({profile.interests.length})
+            </h4>
+            <div className="flex flex-wrap gap-1.5 min-h-[40px] p-2 bg-paper-50 rounded-lg border border-ink-100">
+              {profile.interests.length === 0 ? (
+                <p className="text-xs text-ink-400 italic">No interests added yet.</p>
+              ) : (
+                profile.interests.map((int) => (
+                  <span
+                    key={int}
+                    className="inline-flex items-center gap-1 rounded-full bg-brass-100 px-2.5 py-0.5 text-xs font-medium text-brass-900"
+                  >
+                    {int}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveInterest(int)}
+                      className="hover:text-red-700"
+                      title="Remove interest"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))
+              )}
+            </div>
           </div>
-        </form>
+
+          {/* Add Form */}
+          <form onSubmit={handleAddInterest} className="space-y-3 pt-3 border-t border-ink-100">
+            <Field label="New Domain / Research Interest">
+              <Input
+                required
+                placeholder="e.g., Computer Vision, Quantum Computing"
+                value={newInterestName}
+                onChange={(e) => setNewInterestName(e.target.value)}
+              />
+            </Field>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" type="button" onClick={() => setAddInterestOpen(false)}>
+                Done
+              </Button>
+              <Button type="submit">+ Add Interest</Button>
+            </div>
+          </form>
+        </div>
       </Modal>
 
     </div>

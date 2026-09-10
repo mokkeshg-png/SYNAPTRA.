@@ -63,16 +63,19 @@ export const PROJECT_TYPES: ProjectType[] = [
 ];
 
 export const ROLE_TEMPLATES = [
-  { name: "Project Lead", description: "Leads execution, coordination, and delivery." },
-  { name: "Researcher", description: "Designs studies, reviews literature, and analyzes findings." },
-  { name: "Machine Learning Engineer", description: "Builds and trains ML models." },
-  { name: "Data Scientist", description: "Prepares datasets, evaluates models, and reports results." },
-  { name: "Frontend Developer", description: "Builds user-facing interfaces." },
-  { name: "Backend Developer", description: "Designs APIs, data stores, and services." },
-  { name: "UI/UX Designer", description: "Designs usable academic product experiences." },
-  { name: "Research Writer", description: "Drafts papers, reports, and documentation." },
-  { name: "Reviewer", description: "Reviews work for quality and academic rigor." },
-  { name: "Faculty/Mentor", description: "Guides research direction and reviews progress." },
+  { name: "Frontend Developer", description: "Builds responsive, accessible, user-facing interfaces and components." },
+  { name: "Backend Developer", description: "Designs RESTful APIs, database schemas, authentication, and core services." },
+  { name: "Full Stack Developer", description: "Builds end-to-end web architectures, APIs, and client interfaces." },
+  { name: "UI/UX Designer", description: "Designs intuitive user journeys, wireframes, and design systems." },
+  { name: "AI/ML Developer", description: "Builds, trains, fine-tunes, and deploys machine learning models." },
+  { name: "Cybersecurity Developer", description: "Implements security protocols, vulnerability testing, and audit logs." },
+  { name: "Cloud Engineer", description: "Manages cloud infrastructure, containerization, and CI/CD pipelines." },
+  { name: "Faculty Mentor", description: "Provides academic oversight, research direction, and milestone evaluation." },
+  { name: "Project Lead", description: "Leads execution, timeline coordination, and deliverable handoffs." },
+  { name: "Researcher", description: "Designs experimental studies, reviews literature, and analyzes findings." },
+  { name: "Data Scientist", description: "Prepares datasets, cleans telemetry, and performs statistical analysis." },
+  { name: "Research Writer", description: "Drafts academic paper manuscripts, methodology reports, and documentation." },
+  { name: "Reviewer", description: "Reviews code, papers, and artifacts for quality and academic rigor." },
 ] as const;
 
 export interface User {
@@ -148,6 +151,7 @@ export interface Profile {
   githubConnected: boolean;
   linkedinUrl?: string;
   portfolioUrl?: string;
+  resumeUrl?: string;
   availabilityHours?: number;
   preferredRoles: string[];
   preferredTeamSize?: number;
@@ -259,6 +263,55 @@ export interface MentorshipRequest {
   message: string;
   status: "pending" | "accepted" | "rejected";
   createdAt: string;
+}
+
+export interface AiStrength {
+  category: string;
+  evidence: string;
+  impact: string;
+}
+
+export interface AiGap {
+  category: string;
+  gap: string;
+  severity: "low" | "medium" | "high";
+  evidence: string;
+}
+
+export interface AiRecommendation {
+  priority: "low" | "medium" | "high";
+  action: string;
+  reason: string;
+}
+
+export interface AiScoreBreakdown {
+  factor: string;
+  score: number;
+  max_score: number;
+  explanation: string;
+}
+
+export interface AiProjectFitResult {
+  match_score: number;
+  summary: string;
+  confidence: "high" | "medium" | "low";
+  strengths: AiStrength[];
+  gaps: AiGap[];
+  recommendations: AiRecommendation[];
+  score_breakdown?: AiScoreBreakdown[];
+}
+
+export interface AiAnalysisRecord {
+  id: string;
+  type: "compatibility" | "team_recommendation" | "skill_gap" | "project_summary";
+  project_id: string;
+  user_id: string;
+  input_context?: Record<string, unknown>;
+  output_result: AiProjectFitResult;
+  model_used?: string;
+  confidence?: "high" | "medium" | "low";
+  created_at: string;
+  expires_at?: string | null;
 }
 
 export interface CompatibilityAnalysis {

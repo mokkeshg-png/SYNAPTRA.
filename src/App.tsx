@@ -16,6 +16,8 @@ import { Admin } from "./pages/Admin";
 import { Settings } from "./pages/Settings";
 import { Search } from "./pages/Search";
 import { Notifications } from "./pages/Notifications";
+import { Requests } from "./pages/Requests";
+import { Messages } from "./pages/Messages";
 import { AiAssistant } from "./components/ai/AiAssistant";
 import { Button } from "./components/ui/Button";
 import { Link } from "react-router-dom";
@@ -55,6 +57,8 @@ export default function App() {
             <Route path="/projects/:id/room" element={<ProjectRoom />} />
             <Route path="/collaborators" element={<Collaborators />} />
             <Route path="/search" element={<Search />} />
+            <Route path="/requests" element={<Requests />} />
+            <Route path="/messages" element={<Messages />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:id" element={<Profile />} />

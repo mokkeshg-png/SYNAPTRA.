@@ -34,6 +34,7 @@ import {
   Sparkles, Users, Calendar, Shield, Clock,
   CheckCircle2, Lock, Flag, ArrowRight,
   GraduationCap, Check, X, Loader2,
+  FileText, ExternalLink
 } from "lucide-react";
 
 export function ProjectDetail() {
@@ -354,14 +355,44 @@ export function ProjectDetail() {
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="font-serif font-bold text-ink text-base">
-                            <Link to={`/profile/${applicant?.userId}`} className="hover:underline">{applicant?.fullName}</Link>
+                            <Link to={`/profile/${applicant?.userId}`} className="hover:underline flex items-center gap-1.5 text-navy-900">
+                              {applicant?.fullName}
+                              <ExternalLink className="h-3 w-3 text-ink-400" />
+                            </Link>
                           </h3>
-                          <span className="text-xs text-ink-400">• {applicant?.institution}</span>
+                          <span className="text-xs text-ink-400">• {applicant?.institution || applicant?.department}</span>
                         </div>
-                        <p className="text-xs text-ink-600 mt-0.5">Role: <strong className="text-navy">{role?.name || "Collaborator"}</strong></p>
+                        <p className="text-xs text-ink-600 mt-0.5">Role Applied: <strong className="text-navy">{role?.name || "Collaborator"}</strong></p>
                       </div>
-                      {req.analysis && <Badge tone="navy">{req.analysis.compatibilityScore}% Compatibility</Badge>}
+                      <div className="flex items-center gap-2">
+                        {applicant?.resumeUrl && (
+                          <a
+                            href={applicant.resumeUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-paper-100 hover:bg-paper-200 text-ink-700 font-medium rounded-md border border-ink-200 transition-colors"
+                          >
+                            <FileText className="h-3.5 w-3.5 text-navy" /> View Resume
+                          </a>
+                        )}
+                        {req.analysis && <Badge tone="navy">{req.analysis.compatibilityScore}% Compatibility</Badge>}
+                      </div>
                     </div>
+
+                    {applicant?.skills && applicant.skills.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 items-center">
+                        <span className="text-[11px] font-semibold text-ink-500 mr-1">Skills:</span>
+                        {applicant.skills.map((s, idx) => (
+                          <span key={idx} className="inline-flex items-center gap-1 text-[11px] bg-paper-100 px-2 py-0.5 rounded text-ink-700 border border-ink-200">
+                            {typeof s === "string" ? s : s.skill}
+                            {typeof s === "object" && s.proficiency && (
+                              <span className="text-[9px] text-navy font-semibold">({s.proficiency})</span>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs bg-paper-50 p-3 rounded-lg">
                       <div><strong className="block text-ink-700 mb-0.5">Motivation:</strong><p className="text-ink-600">{req.motivation}</p></div>
                       <div><strong className="block text-ink-700 mb-0.5">Experience:</strong><p className="text-ink-600">{req.relevantExperience}</p></div>
@@ -379,7 +410,7 @@ export function ProjectDetail() {
                     )}
                     <div className="flex items-center justify-end gap-2 pt-2">
                       <Button size="sm" variant="outline" onClick={() => { setRejectRequestId(req.id); setRejectModalOpen(true); }} className="text-red-700 hover:bg-red-50">
-                        <X className="h-4 w-4 mr-1" /> Reject
+                        <X className="h-4 w-4 mr-1" /> Decline
                       </Button>
                       <Button size="sm" onClick={() => handleReviewApp(req.id, "accepted")}>
                         <Check className="h-4 w-4 mr-1" /> Accept into Team
@@ -534,6 +565,18 @@ export function ProjectDetail() {
                 <Badge tone={member.systemRole === "mentor" ? "green" : "navy"}>{member.systemRole.toUpperCase()}</Badge>
               </div>
             ))}
+            {!activeMembers.some((m) => m.member.systemRole === "mentor") && (
+              <div className="rounded-lg border border-dashed border-ink-200 bg-paper-50 p-3 text-center space-y-2">
+                <p className="text-xs text-ink-500">No Faculty Mentor assigned yet</p>
+                {isOwner && (
+                  <Link to={`/search?tab=faculty&domain=${encodeURIComponent(project.domains[0] || "")}`} className="inline-block">
+                    <Button size="sm" variant="outline" className="text-xs">
+                      <GraduationCap className="h-3.5 w-3.5 mr-1 text-navy" /> Browse Faculty Mentors
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            )}
           </Card>
         </div>
       </div>
