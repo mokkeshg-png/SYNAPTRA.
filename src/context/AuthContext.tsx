@@ -1,51 +1,99 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import type { Profile, User } from "@/types";
-import {
-  currentProfile,
-  currentUser,
-  initStore,
-  login as storeLogin,
-  logout as storeLogout,
-  subscribeStore,
-} from "@/lib/store";
+import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
+import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
+import { fetchProfile, touchLastActive } from "@/lib/supabase-db";
+import type { Profile } from "@/types";
 
 interface AuthValue {
   ready: boolean;
-  user: User | null;
+  session: Session | null;
+  user: SupabaseUser | null;
   profile: Profile | null;
-  login: (email: string, password: string) => Promise<User>;
-  logout: () => void;
-  refresh: () => void;
+  /** Re-fetch profile from Supabase (call after saving profile changes) */
+  refresh: () => Promise<void>;
+  login: (email: string, password: string) => Promise<SupabaseUser>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthValue | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
-  const [tick, setTick] = useState(0);
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
 
-  useEffect(() => {
-    initStore().then(() => setReady(true));
-    const unsubscribe = subscribeStore(() => setTick((n) => n + 1));
-    return () => {
-      unsubscribe();
-    };
+  const loadProfile = useCallback(async (uid: string) => {
+    try {
+      const p = await fetchProfile(uid);
+      setProfile(p);
+    } catch {
+      setProfile(null);
+    }
   }, []);
 
-  const value = useMemo<AuthValue>(() => {
-    const user = ready ? currentUser() : null;
-    const profile = ready ? currentProfile() : null;
-    return {
-      ready,
-      user,
-      profile,
-      login: storeLogin,
-      logout: storeLogout,
-      refresh: () => setTick((n) => n + 1),
-    };
-  }, [ready, tick]);
+  // Bootstrap: restore session, then listen for changes
+  useEffect(() => {
+    let ignore = false;
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    supabase!.auth.getSession().then(async ({ data }) => {
+      if (ignore) return;
+      const s = data.session ?? null;
+      setSession(s);
+      setUser(s?.user ?? null);
+      if (s?.user) {
+        await loadProfile(s.user.id);
+        touchLastActive(s.user.id).catch(() => {});
+      }
+      setReady(true);
+    });
+
+    const { data: { subscription } } = supabase!.auth.onAuthStateChange(async (_event, s) => {
+      if (ignore) return;
+      setSession(s);
+      setUser(s?.user ?? null);
+      if (s?.user) {
+        await loadProfile(s.user.id);
+        touchLastActive(s.user.id).catch(() => {});
+      } else {
+        setProfile(null);
+      }
+      setReady(true);
+    });
+
+    return () => {
+      ignore = true;
+      subscription.unsubscribe();
+    };
+  }, [loadProfile]);
+
+  const refresh = useCallback(async () => {
+    if (user?.id) await loadProfile(user.id);
+  }, [user, loadProfile]);
+
+  const login = useCallback(async (email: string, password: string) => {
+    const { data, error } = await supabase!.auth.signInWithPassword({ email, password });
+    if (error) throw new Error(error.message);
+    const u = data.user!;
+    setSession(data.session);
+    setUser(u);
+    await loadProfile(u.id);
+    touchLastActive(u.id).catch(() => {});
+    return u;
+  }, [loadProfile]);
+
+  const logout = useCallback(async () => {
+    await supabase!.auth.signOut();
+    setSession(null);
+    setUser(null);
+    setProfile(null);
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ ready, session, user, profile, refresh, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

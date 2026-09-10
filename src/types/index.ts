@@ -126,10 +126,14 @@ export interface Publication {
 export interface Profile {
   id: string;
   userId: string;
+  email: string;
+  role: PlatformRole;
   fullName: string;
   photoUrl?: string;
   institution: string;
   department: string;
+  phone?: string;
+  location?: string;
   bio?: string;
   visibility: ProfileVisibility;
   profileCompleteness: number;

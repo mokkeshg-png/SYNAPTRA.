@@ -9,13 +9,17 @@ export function ProjectCard({
   project,
   viewer,
   match,
+  memberCount,
 }: {
   project: Project;
   viewer?: Profile | null;
   match?: number;
+  memberCount?: number;
 }) {
   const score = match ?? (viewer ? projectMatchBreakdown(viewer, project).score : undefined);
-  const fill = Math.min(100, Math.round((0 / project.teamMax) * 100));
+  const fill = memberCount !== undefined
+    ? Math.min(100, Math.round((memberCount / project.teamMax) * 100))
+    : 0;
   return (
     <Card className="flex h-full flex-col">
       <div className="flex items-start justify-between gap-3">

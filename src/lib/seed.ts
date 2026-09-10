@@ -23,9 +23,11 @@ async function user(
   };
 }
 
-function profile(p: Omit<Profile, "id" | "profileCompleteness" | "createdAt" | "updatedAt"> & { createdAt: string }): Profile {
+function profile(p: Omit<Profile, "id" | "profileCompleteness" | "createdAt" | "updatedAt" | "role" | "email"> & { createdAt: string; role?: Profile["role"] }): Profile {
   const full: Profile = {
     id: `prof-${p.userId}`,
+    email: `mock-${p.userId}@example.com`,
+    role: p.role ?? "student",
     profileCompleteness: 0,
     updatedAt: p.createdAt,
     ...p,

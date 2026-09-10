@@ -66,16 +66,15 @@ export function Navbar() {
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, authRequired: true },
     { name: "Explore Projects", href: "/projects", icon: Compass, authRequired: false },
     { name: "Find Collaborators", href: "/collaborators", icon: Users, authRequired: false },
-    ...(user?.role === "admin"
+    ...(profile?.role === "admin"
       ? [{ name: "Admin Center", href: "/admin", icon: Shield, authRequired: true }]
       : []),
   ];
 
   const currentRoleLabel = () => {
     if (!user) return "Guest";
-    if (user.role === "admin") return "Admin";
-    if (user.role === "faculty") return "Faculty";
-    if (user.id === "u-arjun") return "Project Owner";
+    if (profile?.role === "admin") return "Admin";
+    if (profile?.role === "faculty") return "Faculty";
     return "Student";
   };
 
@@ -292,7 +291,7 @@ export function Navbar() {
                       <p className="text-sm font-semibold text-ink truncate">{profile?.fullName}</p>
                       <p className="text-xs text-ink-400 truncate">{user.email}</p>
                       <span className="mt-1 inline-block rounded-full bg-paper px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-ink-600">
-                        {user.role}
+                        {profile?.role ?? "student"}
                       </span>
                     </div>
 
@@ -314,7 +313,7 @@ export function Navbar() {
                       Explore Projects
                     </Link>
 
-                    {user.role === "admin" && (
+                    {profile?.role === "admin" && (
                       <Link
                         to="/admin"
                         onClick={() => setUserMenuOpen(false)}

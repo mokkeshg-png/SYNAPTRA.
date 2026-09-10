@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { saveProfile } from "@/lib/store";
+import { saveProfile } from "@/lib/supabase-db";
 import { computeCompleteness } from "@/lib/completeness";
 import { Button } from "@/components/ui/Button";
 import { Card, Badge, Progress } from "@/components/ui/Card";
@@ -31,28 +31,20 @@ export function Onboarding() {
 
   // Form State
   const [bio, setBio] = useState(profile?.bio || "");
-  const [degreeProgram, setDegreeProgram] = useState(profile?.degreeProgram || "B.Tech Computer Science");
+  const [degreeProgram, setDegreeProgram] = useState(profile?.degreeProgram || "");
   const [graduationYear, setGraduationYear] = useState<number>(profile?.graduationYear || 2026);
   const [photoUrl, setPhotoUrl] = useState(profile?.photoUrl || "");
 
   // Skills
   const [skills, setSkills] = useState<UserSkill[]>(
-    profile?.skills?.length
-      ? profile.skills
-      : [
-          { skill: "Python", proficiency: "advanced" },
-          { skill: "Machine Learning", proficiency: "intermediate" },
-          { skill: "PyTorch", proficiency: "beginner" },
-        ]
+    profile?.skills?.length ? profile.skills : []
   );
   const [customSkillName, setCustomSkillName] = useState("");
   const [customSkillProf, setCustomSkillProf] = useState<Proficiency>("intermediate");
 
   // Interests
   const [interests, setInterests] = useState<string[]>(
-    profile?.interests?.length
-      ? profile.interests
-      : ["Computer Vision", "Deep Learning", "Healthcare AI"]
+    profile?.interests?.length ? profile.interests : []
   );
   const [customInterest, setCustomInterest] = useState("");
 
@@ -198,7 +190,7 @@ export function Onboarding() {
     } else {
       setSaving(true);
       try {
-        saveProfile(user.id, {
+        await saveProfile(user.id, {
           bio,
           degreeProgram,
           graduationYear: Number(graduationYear),
@@ -215,7 +207,7 @@ export function Onboarding() {
           availabilityHours: Number(availabilityHours),
           preferredTeamSize: Number(preferredTeamSize),
         });
-        refresh();
+        await refresh();
         navigate("/dashboard");
       } catch (err: any) {
         setError(err?.message || "Failed to save profile");

@@ -5,12 +5,11 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
-import { requestPasswordReset, resetPassword } from "@/lib/store";
-import { DEMO_CREDENTIALS } from "@/lib/seed";
+import { resetPasswordEmail } from "@/lib/supabase-db";
 import { Lock, Mail, AlertCircle } from "lucide-react";
 
 export function Login() {
-  const { login, refresh } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const redirect = params.get("redirect") || "/dashboard";
@@ -23,9 +22,6 @@ export function Login() {
   // Forgot Password modal state
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
-  const [resetToken, setResetToken] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [forgotStep, setForgotStep] = useState<"email" | "token">("email");
   const [forgotMsg, setForgotMsg] = useState<string>("");
   const [forgotLoading, setForgotLoading] = useState(false);
 
@@ -35,26 +31,9 @@ export function Login() {
     setLoading(true);
     try {
       await login(email, password);
-      refresh();
       navigate(redirect);
     } catch (err: any) {
       setError(err?.message || "Invalid email or password. Please check your credentials.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDemoPreset = async (presetEmail: string) => {
-    setEmail(presetEmail);
-    setPassword(DEMO_CREDENTIALS.password);
-    setError(null);
-    setLoading(true);
-    try {
-      await login(presetEmail, DEMO_CREDENTIALS.password);
-      refresh();
-      navigate(redirect);
-    } catch (err: any) {
-      setError(err?.message || "Failed to sign in with demo preset");
     } finally {
       setLoading(false);
     }
@@ -64,22 +43,10 @@ export function Login() {
     e.preventDefault();
     setForgotLoading(true);
     try {
-      if (forgotStep === "email") {
-        const res = await requestPasswordReset(forgotEmail);
-        setForgotStep("token");
-        setResetToken(res.token || "");
-        setForgotMsg(`Simulated academic reset token issued: ${res.token || ""}`);
-      } else {
-        await resetPassword(resetToken, newPassword);
-        setForgotMsg("Password reset successfully. You can now log in.");
-        setTimeout(() => {
-          setForgotOpen(false);
-          setForgotStep("email");
-          setForgotMsg("");
-        }, 1500);
-      }
+      await resetPasswordEmail(forgotEmail);
+      setForgotMsg("Password reset email sent. Check your inbox for a link to reset your password.");
     } catch (err: any) {
-      setForgotMsg(err?.message || "Failed to process reset request");
+      setForgotMsg(err?.message || "Failed to send reset email. Please verify your email address.");
     } finally {
       setForgotLoading(false);
     }
@@ -137,16 +104,13 @@ export function Login() {
               </div>
             </Field>
 
-            <div className="flex items-center justify-between text-xs">
-              <label className="flex items-center gap-2 cursor-pointer text-ink-600">
-                <input type="checkbox" className="rounded border-ink-300 text-navy focus:ring-navy" />
-                <span>Remember this computer</span>
-              </label>
+            <div className="flex items-center justify-end text-xs">
               <button
                 type="button"
                 onClick={() => {
                   setForgotOpen(true);
                   setForgotEmail(email);
+                  setForgotMsg("");
                 }}
                 className="font-medium text-navy hover:underline"
               >
@@ -158,47 +122,6 @@ export function Login() {
               Sign In
             </Button>
           </form>
-
-          {/* Quick Demo Presets */}
-          <div className="mt-6 pt-6 border-t border-ink-100">
-            <p className="text-xs font-semibold uppercase tracking-wider text-ink-400 text-center mb-3">
-              One-Click Demo Personas
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleDemoPreset(DEMO_CREDENTIALS.student)}
-                className="rounded-lg border border-ink-200 bg-paper-50 p-2 text-left hover:bg-navy-50 hover:border-navy transition"
-              >
-                <div className="text-xs font-semibold text-ink">Student</div>
-                <div className="text-[11px] text-ink-500">Rahul Mehta</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoPreset(DEMO_CREDENTIALS.owner)}
-                className="rounded-lg border border-ink-200 bg-paper-50 p-2 text-left hover:bg-navy-50 hover:border-navy transition"
-              >
-                <div className="text-xs font-semibold text-ink">Project Owner</div>
-                <div className="text-[11px] text-ink-500">Arjun Nair</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoPreset(DEMO_CREDENTIALS.faculty)}
-                className="rounded-lg border border-ink-200 bg-paper-50 p-2 text-left hover:bg-navy-50 hover:border-navy transition"
-              >
-                <div className="text-xs font-semibold text-ink">Faculty Mentor</div>
-                <div className="text-[11px] text-ink-500">Dr. Priya Sharma</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoPreset(DEMO_CREDENTIALS.admin)}
-                className="rounded-lg border border-ink-200 bg-paper-50 p-2 text-left hover:bg-navy-50 hover:border-navy transition"
-              >
-                <div className="text-xs font-semibold text-ink">Platform Admin</div>
-                <div className="text-[11px] text-ink-500">Full Moderation</div>
-              </button>
-            </div>
-          </div>
         </Card>
 
         <p className="text-center text-xs text-ink-500">
@@ -222,43 +145,22 @@ export function Login() {
             </div>
           )}
 
-          {forgotStep === "email" ? (
-            <Field label="Your Registered Email">
-              <Input
-                type="email"
-                required
-                placeholder="name@university.ac.in"
-                value={forgotEmail}
-                onChange={(e) => setForgotEmail(e.target.value)}
-              />
-            </Field>
-          ) : (
-            <>
-              <Field label="Reset Token" hint="Token generated for local testing">
-                <Input
-                  required
-                  value={resetToken}
-                  onChange={(e) => setResetToken(e.target.value)}
-                />
-              </Field>
-              <Field label="New Password">
-                <Input
-                  type="password"
-                  required
-                  placeholder="Min 8 chars, 1 uppercase, 1 number"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                />
-              </Field>
-            </>
-          )}
+          <Field label="Your Registered Email">
+            <Input
+              type="email"
+              required
+              placeholder="name@university.ac.in"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+            />
+          </Field>
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" type="button" onClick={() => setForgotOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" loading={forgotLoading}>
-              {forgotStep === "email" ? "Send Reset Token" : "Save New Password"}
+              Send Reset Email
             </Button>
           </div>
         </form>

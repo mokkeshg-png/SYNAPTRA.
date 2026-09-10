@@ -1,28 +1,43 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import {
-  getState,
-  canAccessRoom,
+  fetchProjectById,
+  fetchProjectMembers,
+  fetchAllProfiles,
+  fetchTasks,
+  fetchTaskComments,
+  fetchMilestones,
+  fetchResearchNotes,
+  fetchReferences,
+  fetchExperiments,
+  fetchMeetings,
+  fetchDatasets,
+  fetchDocuments,
+  fetchDiscussions,
+  fetchReplies,
+  fetchActivityLogs,
+  canAccessRoomSync,
   saveTask,
   commentOnTask,
   addMilestone,
   toggleMilestone,
-  addNote,
+  addResearchNote as addNote,
   addReference,
   addExperiment,
   addMeeting,
   addDataset,
-  addDocument,
+  uploadDocument,
   addDiscussion,
   addReply,
-  setProjectGithub,
+  saveGithubRepo,
   assignRole,
   removeMember,
   leaveProject,
   updateProject,
   inviteUser,
-} from "@/lib/store";
+  getDocumentUrl,
+} from "@/lib/supabase-db";
 import { analyzeSkillGap } from "@/lib/matching";
 import { Button } from "@/components/ui/Button";
 import { Card, Badge, Progress, EmptyState } from "@/components/ui/Card";
@@ -33,7 +48,6 @@ import type {
   TaskPriority,
   NoteCategory,
   DocumentAccess,
-  Profile,
 } from "@/types";
 import {
   LayoutDashboard,
@@ -56,6 +70,7 @@ import {
   Check,
   Shield,
   FileText,
+  Loader2,
 } from "lucide-react";
 
 type RoomTab =
@@ -73,20 +88,88 @@ type RoomTab =
 
 export function ProjectRoom() {
   const { id } = useParams<{ id: string }>();
-  const { user, refresh } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const state = getState();
 
-  const project = state.projects.find((p) => p.id === id);
+  // All async state — replaces getState()
+  const [project, setProject] = useState<any>(null);
+  const [members, setMembers] = useState<any[]>([]);
+  const [allProfiles, setAllProfiles] = useState<any[]>([]);
+  const [projectTasks, setProjectTasks] = useState<any[]>([]);
+  const [taskComments, setTaskComments] = useState<any[]>([]);
+  const [projectMilestones, setProjectMilestones] = useState<any[]>([]);
+  const [projectNotes, setProjectNotes] = useState<any[]>([]);
+  const [projectReferences, setProjectReferences] = useState<any[]>([]);
+  const [projectExperiments, setProjectExperiments] = useState<any[]>([]);
+  const [projectMeetings, setProjectMeetings] = useState<any[]>([]);
+  const [projectDatasets, setProjectDatasets] = useState<any[]>([]);
+  const [projectDocs, setProjectDocs] = useState<any[]>([]);
+  const [projectDiscussions, setProjectDiscussions] = useState<any[]>([]);
+  const [discussionReplies, setDiscussionReplies] = useState<any[]>([]);
+  const [projectActivity, setProjectActivity] = useState<any[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [hasAccess, setHasAccess] = useState(false);
 
   const [activeTab, setActiveTab] = useState<RoomTab>("overview");
+  const [researchSubTab, setResearchSubTab] = useState<"notes"|"references"|"experiments"|"meetings"|"datasets">("notes");
 
-  // Sub-workspace tabs inside Research
-  const [researchSubTab, setResearchSubTab] = useState<
-    "notes" | "references" | "experiments" | "meetings" | "datasets"
-  >("notes");
+  const loadAll = useCallback(async () => {
+    if (!id || !user) return;
+    const [proj, mems, profiles] = await Promise.all([
+      fetchProjectById(id),
+      fetchProjectMembers(id),
+      fetchAllProfiles(),
+    ]);
+    if (!proj) { setDataLoading(false); return; }
+    setProject(proj);
+    setMembers(mems);
+    setAllProfiles(profiles);
 
-  // Kanban Filter & Task Modal
+    // Check access
+    const access = canAccessRoomSync(user.id, id, mems);
+    setHasAccess(access);
+    if (!access) { setDataLoading(false); return; }
+
+    // Load all workspace data in parallel
+    const [tasks, milestones, notes, refs, exps, meetings, datasets, docs, discussions, activity] = await Promise.all([
+      fetchTasks(id),
+      fetchMilestones(id),
+      fetchResearchNotes(id),
+      fetchReferences(id),
+      fetchExperiments(id),
+      fetchMeetings(id),
+      fetchDatasets(id),
+      fetchDocuments(id),
+      fetchDiscussions(id),
+      fetchActivityLogs(id),
+    ]);
+    setProjectTasks(tasks);
+    setProjectMilestones(milestones);
+    setProjectNotes(notes);
+    setProjectReferences(refs);
+    setProjectExperiments(exps);
+    setProjectMeetings(meetings);
+    setProjectDatasets(datasets);
+    setProjectDocs(docs);
+    setProjectDiscussions(discussions);
+    setProjectActivity(activity);
+
+    // Load comments for all tasks
+    const allComments: any[] = [];
+    await Promise.all(tasks.map(async (t: any) => {
+      const cs = await fetchTaskComments(t.id);
+      allComments.push(...cs);
+    }));
+    setTaskComments(allComments);
+
+    setDataLoading(false);
+  }, [id, user]);
+
+  useEffect(() => { loadAll(); }, [loadAll]);
+
+  const refresh = useCallback(async () => { await loadAll(); }, [loadAll]);
+
+  // Task comments, discussions
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDesc, setTaskDesc] = useState("");
@@ -141,16 +224,16 @@ export function ProjectRoom() {
 
   // Document Upload Modal
   const [docModalOpen, setDocModalOpen] = useState(false);
-  const [docName, setDocName] = useState("");
-  const [docType] = useState("PDF Document");
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [docUploading, setDocUploading] = useState(false);
   const [docAccess, setDocAccess] = useState<DocumentAccess>("members");
 
-  // Discussion Modals
+  // Discussion state
+  const [selectedDiscussionId, setSelectedDiscussionId] = useState<string | null>(null);
+  const [replyBody, setReplyBody] = useState("");
   const [discModalOpen, setDiscModalOpen] = useState(false);
   const [discTitle, setDiscTitle] = useState("");
   const [discBody, setDiscBody] = useState("");
-  const [selectedDiscussionId, setSelectedDiscussionId] = useState<string | null>(null);
-  const [replyBody, setReplyBody] = useState("");
 
   // Invite member modal
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
@@ -159,7 +242,7 @@ export function ProjectRoom() {
 
   // GitHub Modal
   const [githubModalOpen, setGithubModalOpen] = useState(false);
-  const [repoInput, setRepoInput] = useState(project?.githubRepo || "synaptra/research-project");
+  const [repoInput, setRepoInput] = useState("");
 
   // AI Assistant Chat state
   const [aiChatMessages, setAiChatMessages] = useState<
@@ -175,97 +258,80 @@ export function ProjectRoom() {
   const [aiThinking, setAiThinking] = useState(false);
 
   // Settings state
-  const [settingsTitle, setSettingsTitle] = useState(project?.title || "");
-  const [settingsDesc, setSettingsDesc] = useState(project?.shortDescription || "");
-  const [settingsVis, setSettingsVis] = useState(project?.visibility || "public");
+  const [settingsTitle, setSettingsTitle] = useState("");
+  const [settingsDesc, setSettingsDesc] = useState("");
+  const [settingsVis, setSettingsVis] = useState("public");
+
+  // Sync settings state from project once loaded
+  useEffect(() => {
+    if (project) {
+      setSettingsTitle(project.title || "");
+      setSettingsDesc(project.shortDescription || "");
+      setSettingsVis(project.visibility || "public");
+      setRepoInput(project.githubRepo || "");
+    }
+  }, [project]);
+
+  if (dataLoading) {
+    return <div className="flex h-96 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-navy" /></div>;
+  }
 
   if (!project) {
     return (
       <div className="flex h-96 flex-col items-center justify-center gap-4 text-center">
         <h2 className="font-serif text-2xl font-bold text-ink">Project Not Found</h2>
-        <Link to="/projects">
-          <Button variant="outline">Back to Projects</Button>
-        </Link>
+        <Link to="/projects"><Button variant="outline">Back to Projects</Button></Link>
       </div>
     );
   }
 
   // Check access authorization per PRD Section 28.1 & Permission Matrix
-  const hasAccess = user ? canAccessRoom(user.id, project.id) : false;
   if (!user || !hasAccess) {
     return (
       <div className="flex h-96 flex-col items-center justify-center gap-4 text-center p-6">
-        <div className="rounded-full bg-red-100 p-3 text-red-700">
-          <Shield className="h-8 w-8" />
-        </div>
+        <div className="rounded-full bg-red-100 p-3 text-red-700"><Shield className="h-8 w-8" /></div>
         <h2 className="font-serif text-2xl font-bold text-ink">Private Project Room</h2>
-        <p className="text-sm text-ink-500 max-w-md">
-          Access to this collaborative research room is restricted to accepted team members, assigned faculty mentors, and project owners.
-        </p>
-        <Link to={`/projects/${project.id}`}>
-          <Button>View Project Overview & Apply</Button>
-        </Link>
+        <p className="text-sm text-ink-500 max-w-md">Access restricted to accepted team members, faculty mentors, and project owners.</p>
+        <Link to={`/projects/${id}`}><Button>View Project Overview & Apply</Button></Link>
       </div>
     );
   }
 
   const isOwner = user.id === project.ownerId;
-  const ownerProfile = state.profiles.find((p) => p.userId === project.ownerId);
+  const ownerProfile = allProfiles.find((p: any) => p.userId === project.ownerId);
 
   // Active Team members
-  const teamMembers = state.members
-    .filter((m) => m.projectId === project.id && m.status === "active")
-    .map((m) => {
-      const p = state.profiles.find((pr) => pr.userId === m.userId);
-      const role = project.roles.find((r) => r.id === m.roleId);
+  const teamMembers = members
+    .filter((m: any) => m.status === "active")
+    .map((m: any) => {
+      const p = allProfiles.find((pr: any) => pr.userId === m.userId);
+      const role = project.roles.find((r: any) => r.id === m.roleId);
       return { member: m, profile: p, roleName: role?.name };
     });
 
-  // Project tasks
-  const projectTasks = state.tasks.filter((t) => t.projectId === project.id);
-  const completedTasks = projectTasks.filter((t) => t.status === "completed");
-  const taskProgress = projectTasks.length
-    ? Math.round((completedTasks.length / projectTasks.length) * 100)
-    : 0;
+  const completedTasks = projectTasks.filter((t: any) => t.status === "completed");
+  const taskProgress = projectTasks.length ? Math.round((completedTasks.length / projectTasks.length) * 100) : 0;
 
-  // Project milestones
-  const projectMilestones = state.milestones.filter((m) => m.projectId === project.id);
-
-  // Project research items
-  const projectNotes = state.notes.filter((n) => n.projectId === project.id);
-  const projectReferences = state.references.filter((r) => r.projectId === project.id);
-  const projectExperiments = state.experiments.filter((e) => e.projectId === project.id);
-  const projectMeetings = state.meetings.filter((m) => m.projectId === project.id);
-  const projectDatasets = state.datasets.filter((d) => d.projectId === project.id);
-  const projectDocs = state.documents.filter((d) => d.projectId === project.id);
-
-  // Discussions
-  const projectDiscussions = state.discussions.filter((d) => d.projectId === project.id);
+  // Active discussion
   const activeDiscussion = selectedDiscussionId
-    ? projectDiscussions.find((d) => d.id === selectedDiscussionId)
+    ? projectDiscussions.find((d: any) => d.id === selectedDiscussionId)
     : projectDiscussions[0] || null;
-  const discussionReplies = activeDiscussion
-    ? state.replies.filter((r) => r.discussionId === activeDiscussion.id)
+  const activeDiscussionReplies = activeDiscussion
+    ? discussionReplies.filter((r: any) => r.discussionId === activeDiscussion.id)
     : [];
 
-  // Activity logs
-  const projectActivity = state.activity.filter((a) => a.projectId === project.id).slice(0, 15);
-
-  // AI Team formation & skill gap analysis
-  const memberProfiles = [
-    ownerProfile,
-    ...teamMembers.map((tm) => tm.profile),
-  ].filter(Boolean) as Profile[];
-  const candidateProfiles = state.profiles.filter(
-    (p) => p.userId !== user.id && !teamMembers.some((m) => m.member.userId === p.userId)
+  // AI gap analysis
+  const memberProfiles = [ownerProfile, ...teamMembers.map((tm: any) => tm.profile)].filter(Boolean);
+  const candidateProfiles = allProfiles.filter(
+    (p: any) => p.userId !== user.id && !teamMembers.some((m: any) => m.member.userId === p.userId)
   );
   const skillGapAnalysis = analyzeSkillGap(project, memberProfiles, candidateProfiles);
 
-  // Handlers
-  const handleSaveTask = (e: React.FormEvent) => {
+  // Handlers — all async, call Supabase, then refresh
+  const handleSaveTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!taskTitle.trim()) return;
-    saveTask(user.id, project.id, {
+    await saveTask(user.id, project.id, {
       title: taskTitle.trim(),
       description: taskDesc.trim(),
       priority: taskPriority,
@@ -273,173 +339,174 @@ export function ProjectRoom() {
       assignedTo: taskAssignee || undefined,
       deadline: taskDeadline || undefined,
     });
-    refresh();
+    await refresh();
     setTaskModalOpen(false);
-    setTaskTitle("");
-    setTaskDesc("");
+    setTaskTitle(""); setTaskDesc("");
   };
 
-  const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
-    const existing = projectTasks.find((t) => t.id === taskId);
+  const handleStatusChange = async (taskId: string, newStatus: TaskStatus) => {
+    const existing = projectTasks.find((t: any) => t.id === taskId);
     if (!existing) return;
-    saveTask(user.id, project.id, { ...existing, status: newStatus }, existing.id);
-    refresh();
+    await saveTask(user.id, project.id, { ...existing, status: newStatus }, existing.id);
+    await refresh();
   };
 
-  const handleAddComment = (e: React.FormEvent) => {
+  const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentModalTaskId || !newCommentBody.trim()) return;
-    commentOnTask(user.id, commentModalTaskId, newCommentBody.trim());
-    refresh();
+    await commentOnTask(user.id, commentModalTaskId, newCommentBody.trim());
+    const updated = await fetchTaskComments(commentModalTaskId);
+    setTaskComments((prev) => [...prev.filter((c: any) => c.taskId !== commentModalTaskId), ...updated]);
     setNewCommentBody("");
   };
 
-  const handleAddMilestone = (e: React.FormEvent) => {
+  const handleAddMilestone = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!msTitle.trim()) return;
-    addMilestone(user.id, project.id, msTitle.trim(), msDueDate || undefined, msDesc.trim());
-    refresh();
+    await addMilestone(user.id, project.id, msTitle.trim(), msDueDate || undefined, msDesc.trim());
+    await refresh();
     setMilestoneModalOpen(false);
-    setMsTitle("");
-    setMsDesc("");
+    setMsTitle(""); setMsDesc("");
   };
 
-  const handleAddNote = (e: React.FormEvent) => {
+  const handleToggleMilestone = async (msId: string, completed: boolean) => {
+    await toggleMilestone(msId, !completed);
+    await refresh();
+  };
+
+  const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!noteTitle.trim()) return;
-    const tags = noteTags.split(",").map((t) => t.trim()).filter(Boolean);
-    addNote(user.id, project.id, {
-      title: noteTitle.trim(),
-      content: noteContent.trim(),
-      category: noteCategory,
-      tags,
-    });
-    refresh();
+    const tags = noteTags.split(",").map((t: string) => t.trim()).filter(Boolean);
+    await addNote(user.id, project.id, { title: noteTitle.trim(), content: noteContent.trim(), category: noteCategory, tags });
+    await refresh();
     setNoteModalOpen(false);
-    setNoteTitle("");
-    setNoteContent("");
+    setNoteTitle(""); setNoteContent("");
   };
 
-  const handleAddRef = (e: React.FormEvent) => {
+  const handleAddRef = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!refTitle.trim()) return;
-    addReference(user.id, project.id, {
-      title: refTitle.trim(),
-      authors: refAuthors.trim(),
-      year: Number(refYear),
-      venue: refVenue.trim(),
-      link: refLink.trim() || undefined,
-      notes: refNotes.trim() || undefined,
-      tags: ["paper", "citation"],
+    await addReference(user.id, project.id, {
+      title: refTitle.trim(), authors: refAuthors.trim(), year: Number(refYear),
+      venue: refVenue.trim(), link: refLink.trim() || undefined, notes: refNotes.trim() || undefined, tags: ["paper"],
     });
-    refresh();
+    await refresh();
     setRefModalOpen(false);
-    setRefTitle("");
-    setRefAuthors("");
-    setRefNotes("");
+    setRefTitle(""); setRefAuthors(""); setRefNotes("");
   };
 
-  const handleAddExp = (e: React.FormEvent) => {
+  const handleAddExp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!expName.trim()) return;
-    addExperiment(user.id, project.id, {
-      name: expName.trim(),
-      objective: expObj.trim(),
-      method: expMethod.trim(),
-      results: expResults.trim(),
-      conclusion: expConclusion.trim(),
+    await addExperiment(user.id, project.id, {
+      name: expName.trim(), objective: expObj.trim(), method: expMethod.trim(),
+      results: expResults.trim(), conclusion: expConclusion.trim(),
       date: new Date().toISOString().slice(0, 10),
     });
-    refresh();
+    await refresh();
     setExpModalOpen(false);
-    setExpName("");
-    setExpObj("");
+    setExpName(""); setExpObj("");
   };
 
-  const handleAddMeeting = (e: React.FormEvent) => {
+  const handleAddMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!meetingAgenda.trim()) return;
-    addMeeting(user.id, project.id, {
+    await addMeeting(user.id, project.id, {
       date: meetingDate,
-      attendees: [user.id, ...teamMembers.map((t) => t.member.userId)],
-      agenda: meetingAgenda.trim(),
-      decisions: meetingDecisions.trim(),
-      actionItems: meetingActions.trim(),
+      attendees: [user.id, ...teamMembers.map((t: any) => t.member.userId)],
+      agenda: meetingAgenda.trim(), decisions: meetingDecisions.trim(), actionItems: meetingActions.trim(),
     });
-    refresh();
+    await refresh();
     setMeetingModalOpen(false);
-    setMeetingAgenda("");
-    setMeetingDecisions("");
+    setMeetingAgenda(""); setMeetingDecisions("");
   };
 
-  const handleAddDataset = (e: React.FormEvent) => {
+  const handleAddDataset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!datasetName.trim()) return;
-    addDataset(user.id, project.id, {
-      name: datasetName.trim(),
-      description: datasetDesc.trim(),
-      source: datasetSource.trim() || undefined,
-      license: datasetLicense,
+    await addDataset(user.id, project.id, {
+      name: datasetName.trim(), description: datasetDesc.trim(),
+      source: datasetSource.trim() || undefined, license: datasetLicense,
     });
-    refresh();
+    await refresh();
     setDatasetModalOpen(false);
-    setDatasetName("");
-    setDatasetDesc("");
+    setDatasetName(""); setDatasetDesc("");
   };
 
-  const handleAddDoc = (e: React.FormEvent) => {
+  const handleAddDoc = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!docName.trim()) return;
-    addDocument(user.id, project.id, {
-      name: docName.trim(),
-      type: docType,
-      size: Math.floor(Math.random() * 2000000) + 150000,
-      dataUrl: "data:application/pdf;base64,mock",
-      access: docAccess,
-    });
-    refresh();
-    setDocModalOpen(false);
-    setDocName("");
+    if (!docFile) { alert("Please select a file to upload."); return; }
+    setDocUploading(true);
+    try {
+      await uploadDocument(user.id, project.id, {
+        name: docFile.name, type: docFile.type, size: docFile.size,
+        blob: docFile, access: docAccess,
+      });
+      await refresh();
+      setDocModalOpen(false);
+      setDocFile(null);
+    } catch (err: any) {
+      alert(err?.message || "Upload failed");
+    } finally {
+      setDocUploading(false);
+    }
   };
 
-  const handleAddDiscussion = (e: React.FormEvent) => {
+  const handleAddDiscussion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!discTitle.trim() || !discBody.trim()) return;
-    addDiscussion(user.id, project.id, discTitle.trim(), discBody.trim());
-    refresh();
-    const created = getState().discussions[0];
-    if (created) setSelectedDiscussionId(created.id);
+    await addDiscussion(user.id, project.id, discTitle.trim(), discBody.trim());
+    await refresh();
+    const updated = await fetchDiscussions(project.id);
+    setProjectDiscussions(updated);
+    if (updated[0]) setSelectedDiscussionId(updated[0].id);
     setDiscModalOpen(false);
-    setDiscTitle("");
-    setDiscBody("");
+    setDiscTitle(""); setDiscBody("");
   };
 
-  const handleAddReply = (e: React.FormEvent) => {
+  const handleAddReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeDiscussion || !replyBody.trim()) return;
-    addReply(user.id, activeDiscussion.id, replyBody.trim());
-    refresh();
+    await addReply(user.id, activeDiscussion.id, replyBody.trim());
+    const updated = await fetchReplies(activeDiscussion.id);
+    setDiscussionReplies(updated);
     setReplyBody("");
   };
 
-  const handleSetGithub = (e: React.FormEvent) => {
+  const handleSetGithub = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isOwner) return;
-    setProjectGithub(user.id, project.id, repoInput.trim());
-    refresh();
+    const parts = repoInput.trim().split("/");
+    const repoOwner = parts[0] || "unknown";
+    const repoName = parts[1] || repoInput.trim();
+    await saveGithubRepo(project.id, user.id, repoInput.trim(), repoName, repoOwner);
+    await refresh();
     setGithubModalOpen(false);
   };
 
-  const handleSaveSettings = (e: React.FormEvent) => {
+  const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isOwner) return;
-    updateProject(user.id, project.id, {
+    await updateProject(user.id, project.id, {
       title: settingsTitle.trim(),
       shortDescription: settingsDesc.trim(),
       visibility: settingsVis as any,
     });
-    refresh();
+    await refresh();
     alert("Project workspace settings updated.");
+  };
+
+  const handleAssignRole = async (memberUserId: string, roleId: string) => {
+    await assignRole(project.id, memberUserId, roleId);
+    await refresh();
+  };
+
+  const handleRemoveMember = async (memberId: string, memberName: string) => {
+    if (confirm(`Remove ${memberName} from project?`)) {
+      await removeMember(user.id, project.id, memberId);
+      await refresh();
+    }
   };
 
   // AI Assistant Chat handler
@@ -713,25 +780,17 @@ export function ProjectRoom() {
                         <Select
                           className="h-8 text-xs w-36"
                           value={member.roleId || ""}
-                          onChange={(e) => {
-                            assignRole(user.id, project.id, member.userId, e.target.value);
-                            refresh();
-                          }}
+                          onChange={(e) => handleAssignRole(member.userId, e.target.value)}
                         >
                           <option value="">Assign Role...</option>
-                          {project.roles.map((r) => (
+                          {project.roles.map((r: any) => (
                             <option key={r.id} value={r.id}>{r.name}</option>
                           ))}
                         </Select>
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => {
-                            if (confirm(`Remove ${p?.fullName} from project?`)) {
-                              removeMember(user.id, project.id, member.id);
-                              refresh();
-                            }
-                          }}
+                          onClick={() => handleRemoveMember(member.id, p?.fullName || "member")}
                           className="text-red-700 text-xs hover:bg-red-50"
                         >
                           Remove
@@ -810,7 +869,7 @@ export function ProjectRoom() {
                 </div>
 
                 <div className="space-y-3">
-                  {skillGapAnalysis.gaps.flatMap((g) => g.recommendedCandidates).slice(0, 5).map((rec) => (
+                  {skillGapAnalysis.gaps.flatMap((g: any) => g.recommendedCandidates).slice(0, 5).map((rec: any) => (
                     <div
                       key={rec.userId}
                       className="rounded-xl border border-ink-100 bg-paper-50/70 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
@@ -882,8 +941,8 @@ export function ProjectRoom() {
 
                       <div className="space-y-2.5 min-h-[220px]">
                         {tasksInCol.map((task) => {
-                          const assigneeProfile = state.profiles.find((p) => p.userId === task.assignedTo);
-                          const taskComments = state.taskComments.filter((tc) => tc.taskId === task.id);
+                          const assigneeProfile = allProfiles.find((p: any) => p.userId === task.assignedTo);
+                          const taskCommentsForTask = taskComments.filter((tc: any) => tc.taskId === task.id);
                           return (
                             <div
                               key={task.id}
@@ -927,7 +986,7 @@ export function ProjectRoom() {
                                   onClick={() => setCommentModalTaskId(task.id)}
                                   className="text-navy hover:underline"
                                 >
-                                  💬 {taskComments.length}
+                                  💬 {taskCommentsForTask.length}
                                 </button>
                               </div>
                             </div>
@@ -959,10 +1018,7 @@ export function ProjectRoom() {
                   <Card key={ms.id} className="p-4 flex items-center justify-between gap-4">
                     <div className="flex items-start gap-3">
                       <button
-                        onClick={() => {
-                          toggleMilestone(user.id, ms.id);
-                          refresh();
-                        }}
+                        onClick={() => handleToggleMilestone(ms.id, ms.completed)}
                         className={`mt-0.5 flex h-5 w-5 items-center justify-center rounded border transition ${
                           ms.completed
                             ? "bg-navy text-white border-navy"
@@ -1033,7 +1089,7 @@ export function ProjectRoom() {
                         </div>
                         <p className="text-xs text-ink-600 leading-relaxed whitespace-pre-line">{n.content}</p>
                         <div className="pt-2 flex flex-wrap gap-1">
-                          {n.tags.map((t) => (
+                          {n.tags.map((t: string) => (
                             <span key={t} className="text-[10px] bg-paper px-1.5 py-0.5 rounded text-ink-500">
                               #{t}
                             </span>
@@ -1195,7 +1251,11 @@ export function ProjectRoom() {
                         </td>
                         <td className="px-4 py-3 text-right">
                           <button
-                            onClick={() => alert(`Simulated preview/download of: ${doc.name}`)}
+                            onClick={async () => {
+                              const url = await getDocumentUrl(doc.dataUrl);
+                              if (url) window.open(url, "_blank");
+                              else alert("Unable to load document URL.");
+                            }}
                             className="text-navy font-semibold hover:underline"
                           >
                             Preview / Download
@@ -1258,10 +1318,10 @@ export function ProjectRoom() {
                       {/* Replies */}
                       <div className="space-y-3">
                         <h4 className="text-xs font-semibold uppercase tracking-wider text-ink-400">
-                          Replies ({discussionReplies.length})
+                          Replies ({activeDiscussionReplies.length})
                         </h4>
-                        {discussionReplies.map((r) => {
-                          const replier = state.profiles.find((p) => p.userId === r.userId);
+                        {activeDiscussionReplies.map((r: any) => {
+                          const replier = allProfiles.find((p: any) => p.userId === r.userId);
                           return (
                             <div key={r.id} className="rounded-lg bg-paper-50 p-3 text-xs space-y-1">
                               <div className="flex justify-between text-ink-500">
@@ -1601,10 +1661,10 @@ export function ProjectRoom() {
       >
         <div className="space-y-4">
           <div className="space-y-2 max-h-60 overflow-y-auto">
-            {state.taskComments
-              .filter((tc) => tc.taskId === commentModalTaskId)
-              .map((tc) => {
-                const author = state.profiles.find((p) => p.userId === tc.userId);
+            {taskComments
+              .filter((tc: any) => tc.taskId === commentModalTaskId)
+              .map((tc: any) => {
+                const author = allProfiles.find((p: any) => p.userId === tc.userId);
                 return (
                   <div key={tc.id} className="rounded-lg bg-paper-50 p-2.5 text-xs space-y-0.5">
                     <div className="flex justify-between text-ink-500">
@@ -1911,13 +1971,15 @@ export function ProjectRoom() {
         title="Upload Project Document"
       >
         <form onSubmit={handleAddDoc} className="space-y-4">
-          <Field label="Document File Name">
-            <Input
+          <Field label="Select File to Upload">
+            <input
+              type="file"
               required
-              placeholder="e.g. Baseline_Model_Evaluation_Report.pdf"
-              value={docName}
-              onChange={(e) => setDocName(e.target.value)}
+              accept=".pdf,.doc,.docx,.txt,.md,.png,.jpg,.jpeg"
+              onChange={(e) => setDocFile(e.target.files?.[0] ?? null)}
+              className="block w-full text-xs text-ink-700 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-navy-50 file:text-navy file:font-medium hover:file:bg-navy-100"
             />
+            {docFile && <p className="text-xs text-ink-500 mt-1">{docFile.name} ({(docFile.size/1024).toFixed(1)} KB)</p>}
           </Field>
           <Field label="Access Level">
             <Select
@@ -1932,7 +1994,7 @@ export function ProjectRoom() {
             <Button variant="outline" type="button" onClick={() => setDocModalOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit">Upload Document</Button>
+            <Button type="submit" disabled={docUploading}>{docUploading ? "Uploading…" : "Upload Document"}</Button>
           </div>
         </form>
       </Modal>
@@ -2006,9 +2068,9 @@ export function ProjectRoom() {
               onChange={(e) => setInviteUserId(e.target.value)}
             >
               <option value="">Select Candidate...</option>
-              {state.profiles
-                .filter((p) => p.userId !== user.id && !teamMembers.some((m) => m.member.userId === p.userId))
-                .map((p) => (
+              {allProfiles
+                .filter((p: any) => p.userId !== user.id && !teamMembers.some((m) => m.member.userId === p.userId))
+                .map((p: any) => (
                   <option key={p.userId} value={p.userId}>
                     {p.fullName} ({p.institution})
                   </option>

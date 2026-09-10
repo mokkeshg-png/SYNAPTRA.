@@ -1,28 +1,30 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { resetStore, initStore, login } from "@/lib/store";
-import { DEMO_CREDENTIALS } from "@/lib/seed";
+import { updatePassword } from "@/lib/supabase-db";
 import { Button } from "@/components/ui/Button";
 import { Card, Badge } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Field";
+import { Field, Input } from "@/components/ui/Field";
 import {
   Settings as SettingsIcon,
   User,
   Shield,
   Bell,
-  RefreshCw,
   AlertTriangle,
   CheckCircle2,
 } from "lucide-react";
 
 export function Settings() {
-  const { user, refresh } = useAuth();
+  const { user, profile } = useAuth();
 
   const [notifEmail, setNotifEmail] = useState(true);
   const [notifInApp, setNotifInApp] = useState(true);
   const [notifMatch, setNotifMatch] = useState(true);
-  const [resetting, setResetting] = useState(false);
+
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwMsg, setPwMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   if (!user) {
     return (
@@ -35,19 +37,27 @@ export function Settings() {
     );
   }
 
-  const handleSwitchPersona = async (email: string) => {
-    await login(email, DEMO_CREDENTIALS.password);
-    refresh();
-  };
-
-  const handleResetSeed = async () => {
-    if (confirm("Reset local database to default demo seed data? All custom additions will revert to initial state.")) {
-      setResetting(true);
-      resetStore();
-      await initStore();
-      refresh();
-      setResetting(false);
-      alert("Local store re-initialized to default demo data.");
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwMsg(null);
+    if (newPassword.length < 8) {
+      setPwMsg({ type: "err", text: "Password must be at least 8 characters." });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPwMsg({ type: "err", text: "Passwords do not match." });
+      return;
+    }
+    setPwLoading(true);
+    try {
+      await updatePassword(newPassword);
+      setPwMsg({ type: "ok", text: "Password updated successfully." });
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      setPwMsg({ type: "err", text: err?.message || "Failed to update password." });
+    } finally {
+      setPwLoading(false);
     }
   };
 
@@ -57,11 +67,11 @@ export function Settings() {
       <div>
         <div className="inline-flex items-center gap-1.5 rounded-full bg-navy-50 px-3 py-1 text-xs font-semibold text-navy-800 mb-2">
           <SettingsIcon className="h-3.5 w-3.5 text-navy-600" />
-          <span>Account Preferences & Testing</span>
+          <span>Account Preferences</span>
         </div>
         <h1 className="font-serif text-3xl font-bold text-ink">Settings & Preferences</h1>
         <p className="mt-1 text-sm text-ink-500">
-          Manage your account credentials, notifications, and test platform roles
+          Manage your account credentials and notification preferences
         </p>
       </div>
 
@@ -74,13 +84,13 @@ export function Settings() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
           <div>
             <span className="text-ink-400 block mb-1 uppercase font-semibold">Registered Email</span>
-            <Input disabled value={user.email} className="bg-paper-50" />
+            <Input disabled value={user.email ?? ""} className="bg-paper-50" />
           </div>
           <div>
             <span className="text-ink-400 block mb-1 uppercase font-semibold">Platform Role</span>
             <div className="flex items-center gap-2 pt-2">
-              <Badge tone="navy">{user.role.toUpperCase()}</Badge>
-              <span className="text-ink-500">• Account Status: {user.status}</span>
+              <Badge tone="navy">{(profile?.role ?? "student").toUpperCase()}</Badge>
+              <span className="text-ink-500">• Account Status: {profile ? "active" : "loading"}</span>
             </div>
           </div>
         </div>
@@ -91,87 +101,46 @@ export function Settings() {
               <User className="h-4 w-4 mr-1" /> View Public Profile
             </Button>
           </Link>
-          <span className="text-[11px] text-ink-400">User ID: {user.id}</span>
+          <span className="text-[11px] text-ink-400">ID: {user.id.slice(0, 8)}…</span>
         </div>
       </Card>
 
-      {/* Demo Role Switcher Section */}
-      <Card className="p-6 space-y-4 border-brass-200 bg-brass-50/20">
-        <div>
-          <h2 className="font-serif text-lg font-bold text-ink flex items-center gap-2">
-            <Shield className="h-4 w-4 text-brass-700" />
-            Switch Active Academic Persona
-          </h2>
-          <p className="text-xs text-ink-500">
-            Instant evaluation tool to test the platform as different PRD user personas:
-          </p>
-        </div>
+      {/* Change Password */}
+      <Card className="p-6 space-y-4">
+        <h2 className="font-serif text-lg font-bold text-ink border-b border-ink-100 pb-2 flex items-center gap-2">
+          <Shield className="h-4 w-4 text-ink-600" />
+          Change Password
+        </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => handleSwitchPersona(DEMO_CREDENTIALS.student)}
-            className={`p-3 rounded-xl border text-left transition flex items-center justify-between ${
-              user.email === DEMO_CREDENTIALS.student
-                ? "border-navy bg-navy-50 font-bold"
-                : "border-ink-200 bg-white hover:bg-paper-50"
-            }`}
-          >
-            <div>
-              <div className="text-xs font-bold text-ink">Rahul Mehta (Student)</div>
-              <div className="text-[11px] text-ink-500">Computer Vision & PyTorch</div>
-            </div>
-            {user.email === DEMO_CREDENTIALS.student && <CheckCircle2 className="h-4 w-4 text-navy" />}
-          </button>
+        {pwMsg && (
+          <div className={`rounded-lg p-3 text-xs border ${pwMsg.type === "ok" ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-red-50 text-red-700 border-red-200"}`}>
+            {pwMsg.text}
+          </div>
+        )}
 
-          <button
-            type="button"
-            onClick={() => handleSwitchPersona(DEMO_CREDENTIALS.owner)}
-            className={`p-3 rounded-xl border text-left transition flex items-center justify-between ${
-              user.email === DEMO_CREDENTIALS.owner
-                ? "border-navy bg-navy-50 font-bold"
-                : "border-ink-200 bg-white hover:bg-paper-50"
-            }`}
-          >
-            <div>
-              <div className="text-xs font-bold text-ink">Arjun Nair (Project Owner)</div>
-              <div className="text-[11px] text-ink-500">Plant Disease Detection Lab</div>
-            </div>
-            {user.email === DEMO_CREDENTIALS.owner && <CheckCircle2 className="h-4 w-4 text-navy" />}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleSwitchPersona(DEMO_CREDENTIALS.faculty)}
-            className={`p-3 rounded-xl border text-left transition flex items-center justify-between ${
-              user.email === DEMO_CREDENTIALS.faculty
-                ? "border-navy bg-navy-50 font-bold"
-                : "border-ink-200 bg-white hover:bg-paper-50"
-            }`}
-          >
-            <div>
-              <div className="text-xs font-bold text-ink">Dr. Priya Sharma (Faculty)</div>
-              <div className="text-[11px] text-ink-500">Healthcare AI Research Mentor</div>
-            </div>
-            {user.email === DEMO_CREDENTIALS.faculty && <CheckCircle2 className="h-4 w-4 text-navy" />}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleSwitchPersona(DEMO_CREDENTIALS.admin)}
-            className={`p-3 rounded-xl border text-left transition flex items-center justify-between ${
-              user.email === DEMO_CREDENTIALS.admin
-                ? "border-navy bg-navy-50 font-bold"
-                : "border-ink-200 bg-white hover:bg-paper-50"
-            }`}
-          >
-            <div>
-              <div className="text-xs font-bold text-ink">Platform Administrator</div>
-              <div className="text-[11px] text-ink-500">Moderation & Platform Desk</div>
-            </div>
-            {user.email === DEMO_CREDENTIALS.admin && <CheckCircle2 className="h-4 w-4 text-navy" />}
-          </button>
-        </div>
+        <form onSubmit={handleChangePassword} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="New Password" hint="Min 8 characters">
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="••••••••"
+              />
+            </Field>
+            <Field label="Confirm New Password">
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+              />
+            </Field>
+          </div>
+          <Button type="submit" loading={pwLoading} size="sm">
+            Update Password
+          </Button>
+        </form>
       </Card>
 
       {/* Notifications Preferences */}
@@ -223,18 +192,19 @@ export function Settings() {
         </div>
       </Card>
 
-      {/* Reset State Action */}
+      {/* Danger zone info */}
       <Card className="p-6 space-y-3 border-red-100 bg-red-50/20">
         <div className="flex items-center gap-2 text-red-900 font-bold text-sm">
           <AlertTriangle className="h-4 w-4 text-red-700" />
-          Reset Demo Data
+          Account Management
         </div>
         <p className="text-xs text-ink-600 leading-relaxed">
-          Restore the browser local storage state back to original PRD seed data (all seed projects, users, tasks, and notes).
+          To deactivate or delete your account, contact your institution administrator or the platform support team.
         </p>
-        <Button variant="danger" size="sm" onClick={handleResetSeed} loading={resetting}>
-          <RefreshCw className="h-3.5 w-3.5" /> Re-seed Demo Database
-        </Button>
+        <div className="flex items-center gap-2 text-xs text-emerald-700">
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          Your data is stored securely in Supabase with row-level security.
+        </div>
       </Card>
     </div>
   );

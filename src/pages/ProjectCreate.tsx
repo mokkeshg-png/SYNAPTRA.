@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { createProject, newRole } from "@/lib/store";
+import { createProject } from "@/lib/supabase-db";
+import { newRole } from "@/lib/store";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input, Textarea, Select } from "@/components/ui/Field";
@@ -22,7 +23,7 @@ import {
 } from "lucide-react";
 
 export function ProjectCreate() {
-  const { user, refresh } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [title, setTitle] = useState("");
@@ -36,7 +37,7 @@ export function ProjectCreate() {
   const [newObjective, setNewObjective] = useState("");
 
   const [domains, setDomains] = useState<string[]>(["Artificial Intelligence"]);
-  const [interests] = useState<string[]>(["Deep Learning", "Computer Vision"]);
+  const [interests, setInterests] = useState<string[]>([]);
   const [requiredSkills, setRequiredSkills] = useState<string[]>(["Python", "PyTorch"]);
 
   // Roles configuration
@@ -131,17 +132,22 @@ export function ProjectCreate() {
     );
   };
 
+  const toggleInterest = (interest: string) => {
+    setInterests((prev) =>
+      prev.includes(interest) ? prev.filter((i) => i !== interest) : [...prev, interest]
+    );
+  };
+
   const toggleSkill = (skill: string) => {
     setRequiredSkills((prev) =>
       prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Validate per PRD 18.1
     if (title.trim().length < 5) {
       setError("Project title must be at least 5 characters long.");
       return;
@@ -170,7 +176,7 @@ export function ProjectCreate() {
         .map((t) => t.trim())
         .filter(Boolean);
 
-      const created = createProject(user.id, {
+      const created = await createProject(user.id, {
         title,
         shortDescription,
         detailedDescription,
@@ -193,7 +199,6 @@ export function ProjectCreate() {
         tags,
       });
 
-      refresh();
       navigate(`/projects/${created.id}`);
     } catch (err: any) {
       setError(err?.message || "Failed to create project");
@@ -357,6 +362,30 @@ export function ProjectCreate() {
                     }`}
                   >
                     {sel ? `✓ ${d}` : `+ ${d}`}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Research Interests picker */}
+          <div>
+            <label className="block text-sm font-medium text-ink-800 mb-1.5">
+              Research Interests ({interests.length} selected)
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {RESEARCH_DOMAINS.map((i) => {
+                const sel = interests.includes(i);
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => toggleInterest(i)}
+                    className={`rounded-full px-2.5 py-1 text-xs transition ${
+                      sel ? "bg-brass text-white font-medium" : "border border-ink-200 bg-white text-ink-700 hover:bg-paper-100"
+                    }`}
+                  >
+                    {sel ? `✓ ${i}` : `+ ${i}`}
                   </button>
                 );
               })}

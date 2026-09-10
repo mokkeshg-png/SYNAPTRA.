@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import { registerUser } from "@/lib/store";
+import { signUp } from "@/lib/supabase-db";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input, Select } from "@/components/ui/Field";
@@ -9,7 +8,6 @@ import { INSTITUTIONS, DEPARTMENTS } from "@/lib/taxonomies";
 import { GraduationCap, Building2, CheckCircle2, AlertCircle } from "lucide-react";
 
 export function Register() {
-  const { refresh } = useAuth();
   const navigate = useNavigate();
 
   const [role, setRole] = useState<"student" | "faculty">("student");
@@ -26,13 +24,12 @@ export function Register() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successVerification, setSuccessVerification] = useState<{ token: string } | null>(null);
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Validations per PRD Section 14.2
     if (password.length < 8) {
       setError("Password must be at least 8 characters long.");
       return;
@@ -52,8 +49,8 @@ export function Register() {
 
     setLoading(true);
     try {
-      const selectedInst = institution === "Other" ? customInstitution : institution;
-      const res = await registerUser({
+      const selectedInst = institution === "Other / Type your institution" ? customInstitution : institution;
+      await signUp({
         email,
         password,
         role,
@@ -63,9 +60,7 @@ export function Register() {
         academicYear: role === "student" ? Number(academicYear) : undefined,
         designation: role === "faculty" ? designation : undefined,
       });
-
-      refresh();
-      setSuccessVerification({ token: res.verificationToken });
+      setSuccess(true);
     } catch (err: any) {
       setError(err?.message || "Registration failed. Please verify your details.");
     } finally {
@@ -88,18 +83,18 @@ export function Register() {
           </p>
         </div>
 
-        {successVerification ? (
+        {success ? (
           <Card className="p-8 text-center space-y-4 border-emerald-200 bg-emerald-50/40">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
               <CheckCircle2 className="h-8 w-8" />
             </div>
             <h3 className="font-serif text-2xl font-bold text-ink">Registration Successful!</h3>
             <p className="text-sm text-ink-600 max-w-md mx-auto">
-              Your academic profile has been initialized with verified status. Proceed to progressive onboarding to configure your research skills and interests.
+              Check your email to confirm your account, then sign in to complete your profile setup.
             </p>
             <div className="pt-2">
-              <Button onClick={() => navigate("/onboarding")} size="lg" className="w-full sm:w-auto">
-                Continue to Progressive Onboarding →
+              <Button onClick={() => navigate("/login")} size="lg" className="w-full sm:w-auto">
+                Go to Sign In →
               </Button>
             </div>
           </Card>
@@ -189,11 +184,8 @@ export function Register() {
                     onChange={(e) => setInstitution(e.target.value)}
                   >
                     {INSTITUTIONS.map((inst) => (
-                      <option key={inst} value={inst}>
-                        {inst}
-                      </option>
+                      <option key={inst} value={inst}>{inst}</option>
                     ))}
-                    <option value="Other">Other (Specify below)</option>
                   </Select>
                 </Field>
 
@@ -203,15 +195,13 @@ export function Register() {
                     onChange={(e) => setDepartment(e.target.value)}
                   >
                     {DEPARTMENTS.map((dept) => (
-                      <option key={dept} value={dept}>
-                        {dept}
-                      </option>
+                      <option key={dept} value={dept}>{dept}</option>
                     ))}
                   </Select>
                 </Field>
               </div>
 
-              {institution === "Other" && (
+              {institution === "Other / Type your institution" && (
                 <Field label="Custom Institution Name">
                   <Input
                     placeholder="Enter your institution or organization"
