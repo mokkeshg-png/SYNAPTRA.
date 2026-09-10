@@ -40,6 +40,13 @@ export function Dashboard() {
   const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [addSkillOpen, setAddSkillOpen] = useState(false);
+  const [newSkillName, setNewSkillName] = useState("");
+  const [newSkillProf, setNewSkillProf] = useState<Proficiency>("intermediate");
+
+  const [addInterestOpen, setAddInterestOpen] = useState(false);
+  const [newInterestName, setNewInterestName] = useState("");
+
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -156,13 +163,6 @@ export function Dashboard() {
     setMentorshipRequests((prev) => prev.map((mr) => mr.id === reqId ? { ...mr, status: accept ? "accepted" : "rejected" } : mr));
     refresh();
   };
-
-  const [addSkillOpen, setAddSkillOpen] = useState(false);
-  const [newSkillName, setNewSkillName] = useState("");
-  const [newSkillProf, setNewSkillProf] = useState<Proficiency>("intermediate");
-
-  const [addInterestOpen, setAddInterestOpen] = useState(false);
-  const [newInterestName, setNewInterestName] = useState("");
 
   const handleAddSkill = (e: React.FormEvent) => {
     e.preventDefault();

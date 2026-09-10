@@ -533,14 +533,32 @@ export function ProjectCreate() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Project Visibility Mode" hint="Governs discovery and details access">
-              <Select
-                value={visibility}
-                onChange={(e) => setVisibility(e.target.value as ProjectVisibility)}
-              >
-                <option value="public">Public (Fully visible in directory)</option>
-                <option value="restricted">Restricted (Teaser visible, requires approval for full details)</option>
-                <option value="private">Private (Invite only, hidden from directory)</option>
-              </Select>
+              <div className="flex flex-col gap-3 mt-2">
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="visibility"
+                    value="public"
+                    checked={visibility === "public"}
+                    onChange={() => setVisibility("public")}
+                    className="h-4 w-4 text-navy border-ink-300 focus:ring-navy"
+                  />
+                  <span className="text-sm text-ink-700 font-medium">Public</span>
+                  <span className="text-xs text-ink-500 ml-1">- Visible in directory</span>
+                </label>
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="visibility"
+                    value="private"
+                    checked={visibility === "private"}
+                    onChange={() => setVisibility("private")}
+                    className="h-4 w-4 text-navy border-ink-300 focus:ring-navy"
+                  />
+                  <span className="text-sm text-ink-700 font-medium">Private</span>
+                  <span className="text-xs text-ink-500 ml-1">- Hidden from directory</span>
+                </label>
+              </div>
             </Field>
 
             <Field label="Application Deadline">

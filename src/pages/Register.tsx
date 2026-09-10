@@ -4,7 +4,6 @@ import { signUp } from "@/lib/supabase-db";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input, Select } from "@/components/ui/Field";
-import { INSTITUTIONS, DEPARTMENTS } from "@/lib/taxonomies";
 import { GraduationCap, Building2, AlertCircle, CheckCircle2 } from "lucide-react";
 
 export function Register() {
@@ -15,9 +14,9 @@ export function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [institution, setInstitution] = useState(INSTITUTIONS[0] || "");
-  const [customInstitution, setCustomInstitution] = useState("");
-  const [department, setDepartment] = useState(DEPARTMENTS[0] || "");
+  const [showPassword, setShowPassword] = useState(false);
+  const institution = "Internal College";
+  const [department, setDepartment] = useState("");
   const [academicYear, setAcademicYear] = useState<number>(3);
   const [designation, setDesignation] = useState("Assistant Professor");
   const [termsAgreed, setTermsAgreed] = useState(false);
@@ -49,13 +48,12 @@ export function Register() {
 
     setLoading(true);
     try {
-      const selectedInst = institution === "Other / Type your institution" ? customInstitution : institution;
       await signUp({
         email,
         password,
-        role,
         fullName,
-        institution: selectedInst || "Institute of Technology",
+        role,
+        institution,
         department,
         academicYear: role === "student" ? Number(academicYear) : undefined,
         designation: role === "faculty" ? designation : undefined,
@@ -160,7 +158,7 @@ export function Register() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field label="Password" hint="Min 8 chars, 1 uppercase, 1 number">
                   <Input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -169,7 +167,7 @@ export function Register() {
 
                 <Field label="Confirm Password">
                   <Input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -177,39 +175,30 @@ export function Register() {
                 </Field>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="University / Institution">
-                  <Select
-                    value={institution}
-                    onChange={(e) => setInstitution(e.target.value)}
-                  >
-                    {INSTITUTIONS.map((inst) => (
-                      <option key={inst} value={inst}>{inst}</option>
-                    ))}
-                  </Select>
-                </Field>
-
-                <Field label="Academic Department">
-                  <Select
-                    value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                  >
-                    {DEPARTMENTS.map((dept) => (
-                      <option key={dept} value={dept}>{dept}</option>
-                    ))}
-                  </Select>
-                </Field>
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="showPassword"
+                  checked={showPassword}
+                  onChange={(e) => setShowPassword(e.target.checked)}
+                  className="rounded border-ink-300 text-navy focus:ring-navy"
+                />
+                <label htmlFor="showPassword" className="text-sm text-ink-600 cursor-pointer">
+                  Show Password
+                </label>
               </div>
 
-              {institution === "Other / Type your institution" && (
-                <Field label="Custom Institution Name">
+              <div className="grid grid-cols-1 gap-4">
+                <Field label="Academic Department">
                   <Input
-                    placeholder="Enter your institution or organization"
-                    value={customInstitution}
-                    onChange={(e) => setCustomInstitution(e.target.value)}
+                    type="text"
+                    placeholder="e.g. Computer Science and Engineering"
+                    required
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
                   />
                 </Field>
-              )}
+              </div>
 
               {role === "student" ? (
                 <Field label="Current Academic Year (1-6)">

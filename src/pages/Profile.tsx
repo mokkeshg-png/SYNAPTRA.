@@ -282,7 +282,12 @@ export function Profile() {
           <Card className="p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-ink-100 pb-2">
               <h3 className="font-serif text-lg font-bold text-ink">Technical Skills</h3>
-              <Badge tone="navy"><Sparkles className="h-3 w-3 mr-1" /> Evidence-Assessed</Badge>
+              <div className="flex items-center gap-2">
+                <Badge tone="navy"><Sparkles className="h-3 w-3 mr-1" /> Evidence-Assessed</Badge>
+                {isSelf && (
+                  <Button size="sm" variant="outline" onClick={() => setAddSkillOpen(true)}>+ Add Skill</Button>
+                )}
+              </div>
             </div>
             <div className="space-y-2.5">
               {profile.skills.map((s) => (
@@ -300,8 +305,13 @@ export function Profile() {
 
           {/* Research Interests */}
           <Card className="p-6 space-y-3">
-            <h3 className="font-serif text-lg font-bold text-ink">Research Interests</h3>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif text-lg font-bold text-ink">Research Interests</h3>
+              {isSelf && (
+                <Button size="sm" variant="outline" onClick={() => setAddInterestOpen(true)}>+ Add Interest</Button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-1.5 pt-1">
               {profile.interests.map((int) => <Badge key={int} tone="brass">{int}</Badge>)}
               {profile.interests.length === 0 && <p className="text-xs text-ink-400 italic">No interests added yet.</p>}
             </div>

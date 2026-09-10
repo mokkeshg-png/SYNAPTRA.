@@ -36,6 +36,7 @@ export function Projects() {
   const filteredProjects = useMemo(() => {
     return projects.filter((p) => {
       if (p.status === "removed" && profile?.role !== "admin") return false;
+      if (p.visibility === "private" && p.ownerId !== profile?.id) return false;
       if (query.trim()) {
         const q = query.toLowerCase();
         const matchesQuery =

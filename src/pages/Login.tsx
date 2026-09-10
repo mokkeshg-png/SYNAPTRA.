@@ -16,6 +16,7 @@ export function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -93,7 +94,7 @@ export function Login() {
             <Field label="Password">
               <div className="relative">
                 <Input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   placeholder="••••••••"
                   value={password}
@@ -104,7 +105,20 @@ export function Login() {
               </div>
             </Field>
 
-            <div className="flex items-center justify-end text-xs">
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="checkbox"
+                id="showPassword"
+                checked={showPassword}
+                onChange={(e) => setShowPassword(e.target.checked)}
+                className="rounded border-ink-300 text-navy focus:ring-navy"
+              />
+              <label htmlFor="showPassword" className="text-sm text-ink-600 cursor-pointer">
+                Show Password
+              </label>
+            </div>
+
+            <div className="flex items-center justify-between text-xs">
               <button
                 type="button"
                 onClick={() => {

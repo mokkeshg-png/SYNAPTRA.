@@ -84,11 +84,23 @@ export function Admin() {
 
   // KPIs
   const totalUsers = profiles.length;
-  const activeUsers = profiles.filter((p) => p.profileCompleteness > 0).length;
   const totalProjects = projects.length;
   const openProjects = projects.filter((p) => p.status === "open").length;
   const completedProjects = projects.filter((p) => p.status === "completed").length;
   const pendingReports = reports.filter((r) => r.status === "pending").length;
+
+  const studentsCount = profiles.filter(p => !p.designation).length;
+  const teachersCount = profiles.filter(p => !!p.designation).length;
+
+  const allSkills = profiles.flatMap(p => p.skills || []).map(s => s.skill);
+  const skillCounts = allSkills.reduce((acc, skill) => {
+    acc[skill] = (acc[skill] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  const topSkills = Object.entries(skillCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([skill, count]) => ({ skill, count, percentage: Math.round((count / Math.max(allSkills.length, 1)) * 100) }));
 
   const filteredUsers = profiles.filter((p) => {
     const isFaculty = !!p.designation;
@@ -143,10 +155,10 @@ export function Admin() {
   };
 
   const tabs = [
-    { id: "overview", label: "Overview Metrics", icon: Sliders },
-    { id: "users", label: `Users (${totalUsers})`, icon: Users },
-    { id: "projects", label: `Projects (${totalProjects})`, icon: FolderGit2 },
-    { id: "reports", label: `Reports (${pendingReports})`, icon: AlertTriangle, badge: pendingReports },
+    { id: "overview", label: "Overview", icon: Sliders },
+    { id: "users", label: `Users (${filteredUsers.length})`, icon: Users },
+    { id: "projects", label: `Projects (${filteredProjects.length})`, icon: FolderGit2 },
+    { id: "reports", label: `Reports (${pendingReports} pending)`, icon: AlertTriangle, badge: pendingReports > 0 ? pendingReports : undefined },
     { id: "ai", label: `AI Logs (${aiCount})`, icon: BrainCircuit },
     { id: "audit", label: `Audit (${auditLogs.length})`, icon: History },
   ];
@@ -184,35 +196,65 @@ export function Admin() {
       {activeTab === "overview" && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <Card className="p-4">
-              <span className="text-xs font-semibold text-ink-400 uppercase tracking-wider">Total Users</span>
-              <p className="font-serif text-3xl font-bold text-ink mt-1">{totalUsers}</p>
-              <span className="text-xs text-emerald-700 font-medium">{activeUsers} with profiles</span>
+            <Card className="p-4 flex flex-col justify-between">
+              <div>
+                <span className="text-xs font-semibold text-ink-400 uppercase tracking-wider">Total Users</span>
+                <p className="font-serif text-3xl font-bold text-ink mt-1">{totalUsers}</p>
+              </div>
+              <span className="text-xs text-navy font-medium mt-2">{studentsCount} Students • {teachersCount} Teachers</span>
             </Card>
-            <Card className="p-4">
-              <span className="text-xs font-semibold text-ink-400 uppercase tracking-wider">Total Projects</span>
-              <p className="font-serif text-3xl font-bold text-ink mt-1">{totalProjects}</p>
-              <span className="text-xs text-navy font-medium">{openProjects} open • {completedProjects} completed</span>
+            <Card className="p-4 flex flex-col justify-between">
+              <div>
+                <span className="text-xs font-semibold text-ink-400 uppercase tracking-wider">Total Projects</span>
+                <p className="font-serif text-3xl font-bold text-ink mt-1">{totalProjects}</p>
+              </div>
+              <span className="text-xs text-navy font-medium mt-2">{openProjects} open • {completedProjects} completed</span>
             </Card>
-            <Card className="p-4">
-              <span className="text-xs font-semibold text-ink-400 uppercase tracking-wider">AI Analyses</span>
-              <p className="font-serif text-3xl font-bold text-ink mt-1">{aiCount}</p>
-              <span className="text-xs text-ink-500">Compatibility & recommendations</span>
+            <Card className="p-4 flex flex-col justify-between">
+              <div>
+                <span className="text-xs font-semibold text-ink-400 uppercase tracking-wider">AI Analyses</span>
+                <p className="font-serif text-3xl font-bold text-ink mt-1">{aiCount}</p>
+              </div>
+              <span className="text-xs text-ink-500 mt-2">Compatibility mappings</span>
             </Card>
-            <Card className="p-4">
-              <span className="text-xs font-semibold text-ink-400 uppercase tracking-wider">Pending Reports</span>
-              <p className="font-serif text-3xl font-bold text-red-700 mt-1">{pendingReports}</p>
-              <span className="text-xs text-red-600 font-medium">Requires moderation</span>
+            <Card className="p-4 flex flex-col justify-between">
+              <div>
+                <span className="text-xs font-semibold text-ink-400 uppercase tracking-wider">Pending Reports</span>
+                <p className="font-serif text-3xl font-bold text-red-700 mt-1">{pendingReports}</p>
+              </div>
+              <span className="text-xs text-red-600 font-medium mt-2">Requires moderation</span>
             </Card>
           </div>
-          <Card className="p-6 space-y-3">
-            <h3 className="font-serif text-lg font-bold text-ink">Institutional Compliance</h3>
-            <ul className="space-y-2 text-xs text-ink-700 pt-2">
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" /><span>Supabase RLS enforced on all tables</span></li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" /><span>Audit logging enabled for all administrative interventions</span></li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" /><span>AI advisory scores — humans always decide</span></li>
-            </ul>
-          </Card>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="p-6 space-y-4">
+              <h3 className="font-serif text-lg font-bold text-ink">Overall Skill Distribution</h3>
+              <div className="space-y-3">
+                {topSkills.length > 0 ? topSkills.map(ts => (
+                  <div key={ts.skill} className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="font-medium text-ink">{ts.skill}</span>
+                      <span className="text-ink-500">{ts.percentage}%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-paper-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-navy rounded-full" style={{ width: `${ts.percentage}%` }} />
+                    </div>
+                  </div>
+                )) : (
+                  <p className="text-xs text-ink-400 italic">No skills recorded yet.</p>
+                )}
+              </div>
+            </Card>
+
+            <Card className="p-6 space-y-3">
+              <h3 className="font-serif text-lg font-bold text-ink">Institutional Compliance</h3>
+              <ul className="space-y-2 text-xs text-ink-700 pt-2">
+                <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" /><span>Supabase RLS enforced on all tables</span></li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" /><span>Audit logging enabled for interventions</span></li>
+                <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" /><span>Data stored securely within approved regions</span></li>
+              </ul>
+            </Card>
+          </div>
         </div>
       )}
 

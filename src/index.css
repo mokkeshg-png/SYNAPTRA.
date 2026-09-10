@@ -16,6 +16,10 @@
     @apply bg-paper-50 text-ink antialiased min-h-screen flex flex-col;
   }
 
+  input, textarea, select {
+    caret-color: #0f172a !important;
+  }
+
   ::selection {
     background-color: #d8e5f8;
     color: #0b1f3a;
