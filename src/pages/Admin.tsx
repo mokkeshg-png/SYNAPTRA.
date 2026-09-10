@@ -82,7 +82,6 @@ export function Admin() {
     );
   }
 
-<<<<<<< Updated upstream
   // KPIs
   const totalUsers = profiles.length;
   const activeUsers = profiles.filter((p) => p.profileCompleteness > 0).length;
@@ -95,30 +94,6 @@ export function Admin() {
     const isFaculty = !!p.designation;
     if (userRoleFilter === "faculty" && !isFaculty) return false;
     if (userRoleFilter === "student" && isFaculty) return false;
-=======
-  const totalStudents = state.users.filter((u) => u.role === "student").length;
-  const totalFaculty = state.users.filter((u) => u.role === "faculty").length;
-  
-  const publicProjects = state.projects.filter((p) => p.visibility === "public").length;
-  const privateProjects = state.projects.filter((p) => p.visibility === "private").length;
-
-  const studentsInProjects = new Set(
-    state.members
-      .filter((m) => state.users.find((u) => u.id === m.userId)?.role === "student")
-      .map((m) => m.userId)
-  ).size;
-
-  const facultyMentors = new Set(
-    state.members
-      .filter((m) => state.users.find((u) => u.id === m.userId)?.role === "faculty")
-      .map((m) => m.userId)
-  ).size;
-
-  // Filtered Users
-  const filteredUsers = state.users.filter((u) => {
-    const prof = state.profiles.find((p) => p.userId === u.id);
-    if (userRoleFilter !== "all" && u.role !== userRoleFilter) return false;
->>>>>>> Stashed changes
     if (userSearch.trim()) {
       const q = userSearch.toLowerCase();
       if (!p.fullName.toLowerCase().includes(q) && !p.institution.toLowerCase().includes(q)) return false;
@@ -230,7 +205,6 @@ export function Admin() {
               <span className="text-xs text-red-600 font-medium">Requires moderation</span>
             </Card>
           </div>
-<<<<<<< Updated upstream
           <Card className="p-6 space-y-3">
             <h3 className="font-serif text-lg font-bold text-ink">Institutional Compliance</h3>
             <ul className="space-y-2 text-xs text-ink-700 pt-2">
@@ -239,131 +213,6 @@ export function Admin() {
               <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" /><span>AI advisory scores — humans always decide</span></li>
             </ul>
           </Card>
-=======
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="p-6 space-y-4">
-              <h3 className="font-serif text-lg font-bold text-ink">Demographics & Projects Breakdown</h3>
-              <div className="space-y-3 pt-2">
-                <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="font-semibold text-ink-600">Students vs Faculty</span>
-                    <span>{totalStudents} Students / {totalFaculty} Faculty</span>
-                  </div>
-                  <div className="w-full h-2 bg-paper-100 rounded-full flex overflow-hidden">
-                    <div style={{ width: `${totalUsers ? (totalStudents/totalUsers)*100 : 0}%` }} className="bg-navy" />
-                    <div style={{ width: `${totalUsers ? (totalFaculty/totalUsers)*100 : 0}%` }} className="bg-brass" />
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="font-semibold text-ink-600">Project Visibility</span>
-                    <span>{publicProjects} Public / {privateProjects} Private</span>
-                  </div>
-                  <div className="w-full h-2 bg-paper-100 rounded-full flex overflow-hidden">
-                    <div style={{ width: `${totalProjects ? (publicProjects/totalProjects)*100 : 0}%` }} className="bg-emerald-600" />
-                    <div style={{ width: `${totalProjects ? (privateProjects/totalProjects)*100 : 0}%` }} className="bg-ink-400" />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="font-semibold text-ink-600">Engagement</span>
-                    <span>{studentsInProjects} Active Students / {facultyMentors} Active Faculty</span>
-                  </div>
-                  <div className="w-full h-2 bg-paper-100 rounded-full flex overflow-hidden">
-                    <div style={{ width: `${totalUsers ? (studentsInProjects/totalUsers)*100 : 0}%` }} className="bg-navy-400" />
-                    <div style={{ width: `${totalUsers ? (facultyMentors/totalUsers)*100 : 0}%` }} className="bg-brass-400" />
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6 space-y-4">
-              <h3 className="font-serif text-lg font-bold text-ink">Platform Activity Flow</h3>
-              <div className="space-y-4 pt-2">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 text-right text-xs font-bold text-ink-500">Users</div>
-                  <div className="flex-1 h-6 bg-navy/20 rounded-md overflow-hidden relative">
-                    <div className="absolute inset-y-0 left-0 bg-navy flex items-center px-2 text-[10px] text-white font-bold" style={{ width: '100%' }}>
-                      {totalUsers} Registered
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  <div className="w-16 text-right text-xs font-bold text-ink-500">Profiles</div>
-                  <div className="flex-1 h-6 bg-emerald-600/20 rounded-md overflow-hidden relative">
-                    <div className="absolute inset-y-0 left-0 bg-emerald-600 flex items-center px-2 text-[10px] text-white font-bold" style={{ width: `${(state.profiles.length / Math.max(totalUsers, 1)) * 100}%` }}>
-                      {state.profiles.length} Completed
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="w-16 text-right text-xs font-bold text-ink-500">Projects</div>
-                  <div className="flex-1 h-6 bg-brass/20 rounded-md overflow-hidden relative">
-                    <div className="absolute inset-y-0 left-0 bg-brass flex items-center px-2 text-[10px] text-white font-bold" style={{ width: `${(totalProjects / Math.max(state.profiles.length, 1)) * 100}%` }}>
-                      {totalProjects} Created
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="w-16 text-right text-xs font-bold text-ink-500">Matches</div>
-                  <div className="flex-1 h-6 bg-indigo-600/20 rounded-md overflow-hidden relative">
-                    <div className="absolute inset-y-0 left-0 bg-indigo-600 flex items-center px-2 text-[10px] text-white font-bold" style={{ width: `${(state.members.length / Math.max(totalUsers, 1)) * 100}%` }}>
-                      {state.members.length} Placements
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="p-6 space-y-3">
-              <h3 className="font-serif text-lg font-bold text-ink">AI Engine Compatibility Operations</h3>
-              <p className="text-xs text-ink-500">
-                Compatibility engine operations executed across project discovery and applicant evaluation:
-              </p>
-              <div className="space-y-2 pt-2 text-xs">
-                <div className="flex justify-between border-b border-ink-50 pb-2">
-                  <span>Total Compatibility Analyses:</span>
-                  <strong>{state.aiLogs.length}</strong>
-                </div>
-                <div className="flex justify-between border-b border-ink-50 pb-2">
-                  <span>Execution Success Rate:</span>
-                  <strong className="text-emerald-700">100% (High Confidence)</strong>
-                </div>
-                <div className="flex justify-between">
-                  <span>Advisory Scoring Rule:</span>
-                  <strong className="text-navy">Ethics Filter Active</strong>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6 space-y-3">
-              <h3 className="font-serif text-lg font-bold text-ink">Institutional Compliance</h3>
-              <p className="text-xs text-ink-500">Academic platform safeguards and role governance:</p>
-              <ul className="space-y-2 text-xs text-ink-700 pt-2">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                  <span>Student & Faculty account separation verified</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                  <span>Row-level privacy enforcement active for restricted projects</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                  <span>Audit logging enabled for all administrative interventions</span>
-                </li>
-              </ul>
-            </Card>
-          </div>
->>>>>>> Stashed changes
         </div>
       )}
 

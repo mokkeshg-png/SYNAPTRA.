@@ -1,4 +1,7 @@
-<<<<<<< Updated upstream
+
+import { saveProfile } from "@/lib/supabase-db";
+import { Modal } from "@/components/ui/Modal";
+import { Field, Input, Select } from "@/components/ui/Field";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -11,23 +14,11 @@ import {
   withdrawApplication,
   fetchAllProfiles,
 } from "@/lib/supabase-db";
-=======
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import { getState, reviewMentorship, withdrawApplication, saveProfile } from "@/lib/store";
->>>>>>> Stashed changes
 import { recommendProjects, recommendCollaborators } from "@/lib/matching";
 import { ProjectCard, PersonCard } from "@/components/projects/ProjectCard";
 import { Button } from "@/components/ui/Button";
 import { Card, Badge, Progress } from "@/components/ui/Card";
-<<<<<<< Updated upstream
-import type { Project, ProjectMember, JoinRequest, MentorshipRequest, Profile } from "@/types";
-=======
-import { Modal } from "@/components/ui/Modal";
-import { Field, Input, Select } from "@/components/ui/Field";
-import type { Proficiency } from "@/types";
->>>>>>> Stashed changes
+import type { Project, ProjectMember, JoinRequest, MentorshipRequest, Profile, Proficiency } from "@/types";
 import {
   Sparkles,
   Layers,
@@ -36,14 +27,7 @@ import {
   GraduationCap,
   Building2,
   ArrowUpRight,
-<<<<<<< Updated upstream
   Loader2,
-=======
-  Trash2,
-  Plus,
-  Wrench,
-  BookOpen,
->>>>>>> Stashed changes
 } from "lucide-react";
 
 export function Dashboard() {
@@ -192,14 +176,7 @@ export function Dashboard() {
     refresh();
   };
 
-  const handleDeleteSkill = (skillName: string) => {
-    saveProfile(user.id, {
-      ...profile,
-      skills: profile.skills.filter(s => s.skill !== skillName)
-    });
-    refresh();
-  };
-
+  
   const handleAddInterest = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newInterestName.trim()) return;
@@ -212,14 +189,7 @@ export function Dashboard() {
     refresh();
   };
 
-  const handleDeleteInterest = (interestName: string) => {
-    saveProfile(user.id, {
-      ...profile,
-      interests: profile.interests.filter(i => i !== interestName)
-    });
-    refresh();
-  };
-
+  
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
       {/* Welcome Banner */}
@@ -361,85 +331,7 @@ export function Dashboard() {
         </section>
       )}
 
-<<<<<<< Updated upstream
       {/* Active Projects */}
-=======
-      {/* Skills & Research Interests Management */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-serif text-2xl font-bold text-ink">Skills & Research Interests</h2>
-            <p className="text-xs text-ink-500">Manage your verified skills to improve AI project recommendations</p>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-ink-100 pb-2">
-              <h3 className="font-serif text-lg font-bold text-ink flex items-center gap-2">
-                <Wrench className="h-4 w-4 text-ink-500" /> Technical Skills
-              </h3>
-              <Button size="sm" variant="outline" onClick={() => setAddSkillOpen(true)}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Add
-              </Button>
-            </div>
-            {profile.skills.length === 0 ? (
-              <p className="text-xs text-ink-400 italic">No skills added yet.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {profile.skills.map((s) => (
-                  <span
-                    key={s.skill}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-navy-200 bg-navy-50/80 px-2.5 py-1 text-xs text-navy-800"
-                  >
-                    <strong>{s.skill}</strong>
-                    <span className="text-[10px] text-navy-600 uppercase tracking-wider">({s.proficiency})</span>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteSkill(s.skill)}
-                      className="text-navy-400 hover:text-red-600 transition"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </Card>
-          
-          <Card className="p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-ink-100 pb-2">
-              <h3 className="font-serif text-lg font-bold text-ink flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-ink-500" /> Research Interests
-              </h3>
-              <Button size="sm" variant="outline" onClick={() => setAddInterestOpen(true)}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Add
-              </Button>
-            </div>
-            {profile.interests.length === 0 ? (
-              <p className="text-xs text-ink-400 italic">No interests added yet.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {profile.interests.map((int) => (
-                  <Badge key={int} tone="brass">
-                    {int}
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteInterest(int)}
-                      className="ml-1 text-brass-700 hover:text-red-600 focus:outline-none"
-                    >
-                      ✕
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </Card>
-        </div>
-      </section>
-
-      {/* Active Projects (Project Rooms) */}
->>>>>>> Stashed changes
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
