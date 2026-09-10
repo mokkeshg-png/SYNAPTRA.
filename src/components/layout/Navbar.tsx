@@ -18,6 +18,7 @@ import {
   LayoutDashboard,
   CheckCheck,
   ChevronDown,
+  Search,
 } from "lucide-react";
 
 export function Navbar() {
@@ -66,6 +67,7 @@ export function Navbar() {
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, authRequired: true },
     { name: "Explore Projects", href: "/projects", icon: Compass, authRequired: false },
     { name: "Find Collaborators", href: "/collaborators", icon: Users, authRequired: false },
+    { name: "Search", href: "/search", icon: Search, authRequired: false },
     ...(profile?.role === "admin"
       ? [{ name: "Admin Center", href: "/admin", icon: Shield, authRequired: true }]
       : []),
@@ -265,6 +267,15 @@ export function Navbar() {
                           </div>
                         ))
                       )}
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-ink-100 text-center">
+                      <Link
+                        to="/notifications"
+                        onClick={() => setNotifOpen(false)}
+                        className="text-xs font-semibold text-navy hover:underline block py-1"
+                      >
+                        View all notifications →
+                      </Link>
                     </div>
                   </div>
                 )}

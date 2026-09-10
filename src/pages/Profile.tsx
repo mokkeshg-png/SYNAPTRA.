@@ -23,6 +23,11 @@ import {
   Flag,
   Sparkles,
   Loader2,
+  Award,
+  BookOpen,
+  Briefcase,
+  GraduationCap,
+  CheckCircle2,
 } from "lucide-react";
 
 export function Profile() {
@@ -43,9 +48,13 @@ export function Profile() {
   const [openToCollaboration, setOpenToCollaboration] = useState(true);
   const [openToMentoring, setOpenToMentoring] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Add Skill Modal
   const [addSkillOpen, setAddSkillOpen] = useState(false);
   const [newSkillName, setNewSkillName] = useState("");
   const [newSkillProf, setNewSkillProf] = useState<Proficiency>("intermediate");
+
+  // Add Interest Modal
   const [addInterestOpen, setAddInterestOpen] = useState(false);
   const [newInterestName, setNewInterestName] = useState("");
 
@@ -85,7 +94,9 @@ export function Profile() {
       setLoading(false);
     }
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [targetUserId, user]);
 
   if (loading) {
@@ -101,13 +112,16 @@ export function Profile() {
       <div className="flex h-96 flex-col items-center justify-center gap-4 text-center">
         <h2 className="font-serif text-2xl font-bold text-ink">Researcher Profile Not Found</h2>
         <p className="text-sm text-ink-500">The requested user profile does not exist or has been removed.</p>
-        <Link to="/collaborators"><Button variant="outline">Back to Directory</Button></Link>
+        <Link to="/collaborators">
+          <Button variant="outline">Back to Directory</Button>
+        </Link>
       </div>
     );
   }
 
   const isSelf = user?.id === profile.userId;
   const isFaculty = !!profile.designation;
+  const uid = `${isFaculty ? "FAC" : "STU"}-${profile.userId.substring(0, 6).toUpperCase()}`;
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,41 +178,43 @@ export function Profile() {
     }
   };
 
-  const handleAddSkill = (e: React.FormEvent) => {
+  const handleAddSkill = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !newSkillName.trim()) return;
-    saveProfile(user.id, {
+    const updatedSkills = [...profile.skills, { skill: newSkillName.trim(), proficiency: newSkillProf }];
+    await saveProfile(user.id, {
       ...profile,
-      skills: [...profile.skills, { skill: newSkillName.trim(), proficiency: newSkillProf }]
+      skills: updatedSkills,
     });
+    setProfile({ ...profile, skills: updatedSkills });
     setNewSkillName("");
     setAddSkillOpen(false);
     refresh();
   };
 
-  
-  const handleAddInterest = (e: React.FormEvent) => {
+  const handleAddInterest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !newInterestName.trim()) return;
-    saveProfile(user.id, {
+    const updatedInterests = [...profile.interests, newInterestName.trim()];
+    await saveProfile(user.id, {
       ...profile,
-      interests: [...profile.interests, newInterestName.trim()]
+      interests: updatedInterests,
     });
+    setProfile({ ...profile, interests: updatedInterests });
     setNewInterestName("");
     setAddInterestOpen(false);
     refresh();
   };
 
-  
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
       {/* Profile Header Card */}
       <Card className="p-6 sm:p-8 relative overflow-hidden">
         <div className="flex flex-col sm:flex-row items-start justify-between gap-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-navy text-white font-serif font-bold text-3xl shadow-md">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-navy text-white font-serif font-bold text-3xl shadow-md overflow-hidden">
               {profile.photoUrl ? (
-                <img src={profile.photoUrl} alt={profile.fullName} className="h-full w-full rounded-2xl object-cover" />
+                <img src={profile.photoUrl} alt={profile.fullName} className="h-full w-full object-cover" />
               ) : (
                 profile.fullName.charAt(0)
               )}
@@ -212,6 +228,9 @@ export function Profile() {
                 <Badge tone={isFaculty ? "brass" : "navy"}>
                   {isFaculty ? "FACULTY" : "STUDENT"}
                 </Badge>
+                <Badge tone="slate" className="font-mono text-[11px]">
+                  ID: {uid}
+                </Badge>
               </div>
               <p className="text-sm font-medium text-ink-700">
                 {profile.designation ? `${profile.designation} • ` : ""}
@@ -219,7 +238,8 @@ export function Profile() {
                 {profile.department}
               </p>
               <p className="text-xs text-ink-500 flex items-center gap-1">
-                <Building2 className="h-3.5 w-3.5" />{profile.institution}
+                <Building2 className="h-3.5 w-3.5" />
+                {profile.institution}
               </p>
             </div>
           </div>
@@ -232,14 +252,22 @@ export function Profile() {
             ) : (
               <>
                 {ownedProjects.length > 0 && (
-                  <Button size="sm" onClick={() => {
-                    setSelectedProjectId(ownedProjects[0]?.id || "");
-                    setInviteOpen(true);
-                  }}>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setSelectedProjectId(ownedProjects[0]?.id || "");
+                      setInviteOpen(true);
+                    }}
+                  >
                     <Mail className="h-4 w-4" /> Invite to Project
                   </Button>
                 )}
-                <Button size="sm" variant="ghost" onClick={() => setReportOpen(true)} className="text-xs text-ink-400 hover:text-red-700">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setReportOpen(true)}
+                  className="text-xs text-ink-400 hover:text-red-700"
+                >
                   <Flag className="h-3.5 w-3.5" />
                 </Button>
               </>
@@ -255,21 +283,29 @@ export function Profile() {
 
         <div className="mt-6 pt-4 border-t border-ink-100 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs text-ink-500">
           <div>
-            <span className="block text-[10px] uppercase font-semibold tracking-wider text-ink-400">Weekly Availability</span>
+            <span className="block text-[10px] uppercase font-semibold tracking-wider text-ink-400">
+              Weekly Availability
+            </span>
             <strong className="text-ink text-sm">{profile.availabilityHours || 10} hrs/week</strong>
           </div>
           <div>
-            <span className="block text-[10px] uppercase font-semibold tracking-wider text-ink-400">Preferred Team Size</span>
+            <span className="block text-[10px] uppercase font-semibold tracking-wider text-ink-400">
+              Preferred Team Size
+            </span>
             <strong className="text-ink text-sm">{profile.preferredTeamSize || 4} members</strong>
           </div>
           <div>
-            <span className="block text-[10px] uppercase font-semibold tracking-wider text-ink-400">Collaboration Status</span>
+            <span className="block text-[10px] uppercase font-semibold tracking-wider text-ink-400">
+              Collaboration Status
+            </span>
             <strong className="text-emerald-700 text-sm">
               {profile.openToCollaboration ? "Open to Projects ✓" : "Unavailable"}
             </strong>
           </div>
           <div>
-            <span className="block text-[10px] uppercase font-semibold tracking-wider text-ink-400">Profile Completeness</span>
+            <span className="block text-[10px] uppercase font-semibold tracking-wider text-ink-400">
+              Profile Completeness
+            </span>
             <strong className="text-navy text-sm">{profile.profileCompleteness}%</strong>
           </div>
         </div>
@@ -283,9 +319,13 @@ export function Profile() {
             <div className="flex items-center justify-between border-b border-ink-100 pb-2">
               <h3 className="font-serif text-lg font-bold text-ink">Technical Skills</h3>
               <div className="flex items-center gap-2">
-                <Badge tone="navy"><Sparkles className="h-3 w-3 mr-1" /> Evidence-Assessed</Badge>
+                <Badge tone="navy">
+                  <Sparkles className="h-3 w-3 mr-1" /> Evidence-Assessed
+                </Badge>
                 {isSelf && (
-                  <Button size="sm" variant="outline" onClick={() => setAddSkillOpen(true)}>+ Add Skill</Button>
+                  <Button size="sm" variant="outline" onClick={() => setAddSkillOpen(true)}>
+                    + Add Skill
+                  </Button>
                 )}
               </div>
             </div>
@@ -294,12 +334,18 @@ export function Profile() {
                 <div key={s.skill} className="space-y-1">
                   <div className="flex justify-between text-xs">
                     <span className="font-medium text-ink">{s.skill}</span>
-                    <span className="text-[11px] text-ink-500 uppercase tracking-wider capitalize">{s.proficiency}</span>
+                    <span className="text-[11px] text-ink-500 uppercase tracking-wider capitalize">
+                      {s.proficiency}
+                    </span>
                   </div>
-                  <Progress value={s.proficiency === "advanced" ? 95 : s.proficiency === "intermediate" ? 65 : 35} />
+                  <Progress
+                    value={s.proficiency === "advanced" ? 95 : s.proficiency === "intermediate" ? 65 : 35}
+                  />
                 </div>
               ))}
-              {profile.skills.length === 0 && <p className="text-xs text-ink-400 italic">No skills added yet.</p>}
+              {profile.skills.length === 0 && (
+                <p className="text-xs text-ink-400 italic">No skills added yet.</p>
+              )}
             </div>
           </Card>
 
@@ -308,12 +354,20 @@ export function Profile() {
             <div className="flex items-center justify-between">
               <h3 className="font-serif text-lg font-bold text-ink">Research Interests</h3>
               {isSelf && (
-                <Button size="sm" variant="outline" onClick={() => setAddInterestOpen(true)}>+ Add Interest</Button>
+                <Button size="sm" variant="outline" onClick={() => setAddInterestOpen(true)}>
+                  + Add Interest
+                </Button>
               )}
             </div>
             <div className="flex flex-wrap gap-1.5 pt-1">
-              {profile.interests.map((int) => <Badge key={int} tone="brass">{int}</Badge>)}
-              {profile.interests.length === 0 && <p className="text-xs text-ink-400 italic">No interests added yet.</p>}
+              {profile.interests.map((int) => (
+                <Badge key={int} tone="brass">
+                  {int}
+                </Badge>
+              ))}
+              {profile.interests.length === 0 && (
+                <p className="text-xs text-ink-400 italic">No interests added yet.</p>
+              )}
             </div>
           </Card>
 
@@ -336,14 +390,22 @@ export function Profile() {
                 <div className="text-xs text-ink-400 italic">No GitHub account linked</div>
               )}
               {profile.linkedinUrl && (
-                <a href={profile.linkedinUrl} target="_blank" rel="noreferrer"
-                  className="flex items-center gap-2 rounded-lg border border-ink-100 p-2.5 hover:bg-paper-50 text-navy">
+                <a
+                  href={profile.linkedinUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 rounded-lg border border-ink-100 p-2.5 hover:bg-paper-50 text-navy"
+                >
                   <Globe className="h-3.5 w-3.5" /> LinkedIn Profile
                 </a>
               )}
               {profile.portfolioUrl && (
-                <a href={profile.portfolioUrl} target="_blank" rel="noreferrer"
-                  className="flex items-center gap-2 rounded-lg border border-ink-100 p-2.5 hover:bg-paper-50 text-navy">
+                <a
+                  href={profile.portfolioUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 rounded-lg border border-ink-100 p-2.5 hover:bg-paper-50 text-navy"
+                >
                   <Globe className="h-3.5 w-3.5" /> Academic Portfolio
                 </a>
               )}
@@ -354,7 +416,8 @@ export function Profile() {
         {/* Right column */}
         <div className="lg:col-span-2 space-y-6">
           <Card className="p-6 space-y-4">
-            <h3 className="font-serif text-xl font-bold text-ink">
+            <h3 className="font-serif text-xl font-bold text-ink flex items-center gap-2">
+              <Briefcase className="h-5 w-5 text-navy" />
               Past Projects & Technical Work ({profile.pastProjects?.length || 0})
             </h3>
             {!profile.pastProjects?.length ? (
@@ -374,8 +437,29 @@ export function Profile() {
             )}
           </Card>
 
+          {profile.certifications && profile.certifications.length > 0 && (
+            <Card className="p-6 space-y-4">
+              <h3 className="font-serif text-xl font-bold text-ink flex items-center gap-2">
+                <Award className="h-5 w-5 text-gold" />
+                Certifications & Honors ({profile.certifications.length})
+              </h3>
+              <div className="space-y-3">
+                {profile.certifications.map((c) => (
+                  <div key={c.id} className="rounded-xl border border-ink-100 bg-paper-50/60 p-4 space-y-1">
+                    <div className="flex justify-between items-start">
+                      <h4 className="font-serif font-bold text-ink text-sm">{c.name}</h4>
+                      {c.year && <span className="text-xs text-ink-400">{c.year}</span>}
+                    </div>
+                    <p className="text-xs text-ink-500">Issuer: {c.issuer}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
           <Card className="p-6 space-y-4">
-            <h3 className="font-serif text-xl font-bold text-ink">
+            <h3 className="font-serif text-xl font-bold text-ink flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-purple-600" />
               Internships & Laboratory Experience ({profile.internships?.length || 0})
             </h3>
             {!profile.internships?.length ? (
@@ -395,7 +479,8 @@ export function Profile() {
 
           {profile.publications && profile.publications.length > 0 && (
             <Card className="p-6 space-y-4">
-              <h3 className="font-serif text-xl font-bold text-ink">
+              <h3 className="font-serif text-xl font-bold text-ink flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-emerald-600" />
                 Academic Publications ({profile.publications.length})
               </h3>
               <div className="space-y-3">
@@ -407,7 +492,12 @@ export function Profile() {
                     </div>
                     <p className="text-xs text-ink-500 italic">Published in: {pub.venue}</p>
                     {pub.link && (
-                      <a href={pub.link} target="_blank" rel="noreferrer" className="text-xs text-navy hover:underline block pt-1">
+                      <a
+                        href={pub.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-navy hover:underline block pt-1"
+                      >
                         View Publication DOI / Link →
                       </a>
                     )}
@@ -423,97 +513,70 @@ export function Profile() {
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit Academic Profile">
         <form onSubmit={handleSaveProfile} className="space-y-4">
           <Field label="Academic Bio / Research Mission">
-            <Textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Summary of research focus..." />
+            <Textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Summary of research focus..."
+            />
           </Field>
           <Field label="Degree Program">
-            <Input value={degreeProgram} onChange={(e) => setDegreeProgram(e.target.value)} placeholder="e.g. B.Tech Computer Science" />
+            <Input
+              value={degreeProgram}
+              onChange={(e) => setDegreeProgram(e.target.value)}
+              placeholder="e.g. B.Tech Computer Science"
+            />
           </Field>
           <Field label="Weekly Availability (Hours)">
-            <Input type="number" min={1} max={60} value={availabilityHours} onChange={(e) => setAvailabilityHours(Number(e.target.value))} />
+            <Input
+              type="number"
+              min={1}
+              max={60}
+              value={availabilityHours}
+              onChange={(e) => setAvailabilityHours(Number(e.target.value))}
+            />
           </Field>
           <div className="space-y-2 pt-2">
             <label className="flex items-center gap-2 cursor-pointer text-xs text-ink-700">
-              <input type="checkbox" checked={openToCollaboration} onChange={(e) => setOpenToCollaboration(e.target.checked)} className="rounded border-ink-300 text-navy focus:ring-navy" />
+              <input
+                type="checkbox"
+                checked={openToCollaboration}
+                onChange={(e) => setOpenToCollaboration(e.target.checked)}
+                className="rounded border-ink-300 text-navy focus:ring-navy"
+              />
               <span>Open to receiving project invitations from collaborators</span>
             </label>
             {isFaculty && (
               <label className="flex items-center gap-2 cursor-pointer text-xs text-ink-700">
-                <input type="checkbox" checked={openToMentoring} onChange={(e) => setOpenToMentoring(e.target.checked)} className="rounded border-ink-300 text-navy focus:ring-navy" />
+                <input
+                  type="checkbox"
+                  checked={openToMentoring}
+                  onChange={(e) => setOpenToMentoring(e.target.checked)}
+                  className="rounded border-ink-300 text-navy focus:ring-navy"
+                />
                 <span>Open to advising and mentoring student research projects</span>
               </label>
             )}
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" type="button" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button type="submit" loading={saving}>Save Changes</Button>
+            <Button variant="outline" type="button" onClick={() => setEditOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" loading={saving}>
+              Save Changes
+            </Button>
           </div>
         </form>
       </Modal>
 
-      {/* Invite Modal */}
-      <Modal open={inviteOpen} onClose={() => setInviteOpen(false)} title={`Invite ${profile.fullName} to Research Project`}>
-        <form onSubmit={handleSendInvite} className="space-y-4">
-          {inviteSuccess ? (
-            <div className="rounded-lg bg-emerald-50 p-4 text-xs text-emerald-800 border border-emerald-200 text-center">
-              Invitation dispatched! The researcher will receive an in-app notification.
-            </div>
-          ) : (
-            <>
-              <Field label="Select Target Project">
-                <Select value={selectedProjectId} onChange={(e) => setSelectedProjectId(e.target.value)}>
-                  {ownedProjects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
-                </Select>
-              </Field>
-              <Field label="Invitation Note">
-                <Input placeholder="e.g. We saw your computer vision background and would love to collaborate." value={inviteMsg} onChange={(e) => setInviteMsg(e.target.value)} />
-              </Field>
-              <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" type="button" onClick={() => setInviteOpen(false)}>Cancel</Button>
-                <Button type="submit">Send Invitation</Button>
-              </div>
-            </>
-          )}
-        </form>
-      </Modal>
-
-      {/* Report Modal */}
-      <Modal open={reportOpen} onClose={() => setReportOpen(false)} title="Report Profile">
-        <form onSubmit={handleReportUser} className="space-y-4">
-          {reportSuccess ? (
-            <div className="rounded-lg bg-emerald-50 p-4 text-xs text-emerald-800 border border-emerald-200 text-center">
-              Report received and queued for administrative review.
-            </div>
-          ) : (
-            <>
-              <Field label="Reason">
-                <Select value={reportType} onChange={(e) => setReportType(e.target.value as ReportType)}>
-                  <option value="fake_profile">Fake Profile / Misrepresented Identity</option>
-                  <option value="spam">Spam or Solicitation</option>
-                  <option value="harassment">Harassment / Abusive Behavior</option>
-                  <option value="other">Other Violation</option>
-                </Select>
-              </Field>
-              <Field label="Details">
-                <Textarea required placeholder="Explain the reason for reporting..." value={reportDetails} onChange={(e) => setReportDetails(e.target.value)} />
-              </Field>
-              <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" type="button" onClick={() => setReportOpen(false)}>Cancel</Button>
-                <Button type="submit" variant="danger">Submit Report</Button>
-              </div>
-            </>
-          )}
-        </form>
-      </Modal>
-
-      {/* Modals for Skills & Interests */}
+      {/* Add Skill Modal */}
       <Modal open={addSkillOpen} onClose={() => setAddSkillOpen(false)} title="Add Technical Skill">
         <form onSubmit={handleAddSkill} className="space-y-4">
           <Field label="Skill Name">
             <Input
-              required
-              placeholder="e.g., Python, React, Data Analysis"
               value={newSkillName}
               onChange={(e) => setNewSkillName(e.target.value)}
+              placeholder="e.g. Python, PyTorch, React, Docker"
+              required
             />
           </Field>
           <Field label="Proficiency Level">
@@ -530,28 +593,115 @@ export function Profile() {
             <Button variant="outline" type="button" onClick={() => setAddSkillOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit">Save Skill</Button>
+            <Button type="submit">Add Skill</Button>
           </div>
         </form>
       </Modal>
 
+      {/* Add Interest Modal */}
       <Modal open={addInterestOpen} onClose={() => setAddInterestOpen(false)} title="Add Research Interest">
         <form onSubmit={handleAddInterest} className="space-y-4">
-          <Field label="Domain / Interest">
+          <Field label="Research Interest / Domain">
             <Input
-              required
-              placeholder="e.g., Machine Learning, Quantum Physics"
               value={newInterestName}
               onChange={(e) => setNewInterestName(e.target.value)}
+              placeholder="e.g. Generative AI, Robotics, Renewable Energy"
+              required
             />
           </Field>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" type="button" onClick={() => setAddInterestOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit">Save Interest</Button>
+            <Button type="submit">Add Interest</Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Invite Modal */}
+      <Modal open={inviteOpen} onClose={() => setInviteOpen(false)} title={`Invite ${profile.fullName} to Project`}>
+        {inviteSuccess ? (
+          <div className="py-8 text-center space-y-2">
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+              <CheckCircle2 className="h-6 w-6" />
+            </div>
+            <h3 className="font-serif font-bold text-ink">Invitation Sent!</h3>
+            <p className="text-xs text-ink-500">The collaborator has received your project invitation.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSendInvite} className="space-y-4">
+            <Field label="Select Open Project">
+              <Select
+                value={selectedProjectId}
+                onChange={(e) => setSelectedProjectId(e.target.value)}
+                required
+              >
+                {ownedProjects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.title}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Invitation Note (Optional)">
+              <Textarea
+                value={inviteMsg}
+                onChange={(e) => setInviteMsg(e.target.value)}
+                placeholder="Explain why their skills would be a great fit for this project..."
+              />
+            </Field>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" type="button" onClick={() => setInviteOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">Send Invitation</Button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      {/* Report Modal */}
+      <Modal open={reportOpen} onClose={() => setReportOpen(false)} title="Report Profile">
+        {reportSuccess ? (
+          <div className="py-8 text-center space-y-2">
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+              <CheckCircle2 className="h-6 w-6" />
+            </div>
+            <h3 className="font-serif font-bold text-ink">Report Submitted</h3>
+            <p className="text-xs text-ink-500">Our academic moderation team will review this report.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleReportUser} className="space-y-4">
+            <Field label="Reason for Report">
+              <Select
+                value={reportType}
+                onChange={(e) => setReportType(e.target.value as ReportType)}
+              >
+                <option value="fake_profile">Fake / Inaccurate Profile</option>
+                <option value="harassment">Harassment / Inappropriate Behavior</option>
+                <option value="spam">Spam / Unrelated Content</option>
+                <option value="inappropriate_content">Academic Misconduct / Plagiarism</option>
+                <option value="other">Other Issue</option>
+              </Select>
+            </Field>
+            <Field label="Details / Context">
+              <Textarea
+                value={reportDetails}
+                onChange={(e) => setReportDetails(e.target.value)}
+                placeholder="Please describe the issue in detail..."
+                required
+              />
+            </Field>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" type="button" onClick={() => setReportOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="danger">
+                Submit Report
+              </Button>
+            </div>
+          </form>
+        )}
       </Modal>
     </div>
   );

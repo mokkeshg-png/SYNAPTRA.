@@ -17,9 +17,11 @@ export function Card({
 export function Badge({
   children,
   tone = "navy",
+  className,
 }: {
   children: React.ReactNode;
   tone?: "navy" | "brass" | "green" | "red" | "slate" | "amber";
+  className?: string;
 }) {
   return (
     <span
@@ -30,7 +32,8 @@ export function Badge({
         tone === "green" && "bg-emerald-50 text-emerald-800",
         tone === "red" && "bg-red-50 text-red-800",
         tone === "slate" && "bg-ink-100 text-ink-600",
-        tone === "amber" && "bg-amber-50 text-amber-900"
+        tone === "amber" && "bg-amber-50 text-amber-900",
+        className
       )}
     >
       {children}
