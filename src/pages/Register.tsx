@@ -1,11 +1,16 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+<<<<<<< Updated upstream
 import { signUp } from "@/lib/supabase-db";
+=======
+import { useAuth } from "@/context/AuthContext";
+import { registerUser, loginAfterRegister } from "@/lib/store";
+>>>>>>> Stashed changes
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input, Select } from "@/components/ui/Field";
 import { INSTITUTIONS, DEPARTMENTS } from "@/lib/taxonomies";
-import { GraduationCap, Building2, CheckCircle2, AlertCircle } from "lucide-react";
+import { GraduationCap, Building2, AlertCircle } from "lucide-react";
 
 export function Register() {
   const navigate = useNavigate();
@@ -24,7 +29,10 @@ export function Register() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+<<<<<<< Updated upstream
   const [success, setSuccess] = useState(false);
+=======
+>>>>>>> Stashed changes
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +68,14 @@ export function Register() {
         academicYear: role === "student" ? Number(academicYear) : undefined,
         designation: role === "faculty" ? designation : undefined,
       });
+<<<<<<< Updated upstream
       setSuccess(true);
+=======
+
+      loginAfterRegister(res.userId);
+      refresh();
+      navigate("/dashboard");
+>>>>>>> Stashed changes
     } catch (err: any) {
       setError(err?.message || "Registration failed. Please verify your details.");
     } finally {
@@ -83,6 +98,7 @@ export function Register() {
           </p>
         </div>
 
+<<<<<<< Updated upstream
         {success ? (
           <Card className="p-8 text-center space-y-4 border-emerald-200 bg-emerald-50/40">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
@@ -100,6 +116,9 @@ export function Register() {
           </Card>
         ) : (
           <Card className="shadow-lift border-ink-200">
+=======
+        <Card className="shadow-lift border-ink-200">
+>>>>>>> Stashed changes
             {/* Role Selection Tabs */}
             <div className="mb-6 grid grid-cols-2 gap-2 rounded-xl bg-paper-100 p-1">
               <button
@@ -261,7 +280,6 @@ export function Register() {
               </Button>
             </form>
           </Card>
-        )}
 
         <p className="text-center text-xs text-ink-500">
           Already registered?{" "}
