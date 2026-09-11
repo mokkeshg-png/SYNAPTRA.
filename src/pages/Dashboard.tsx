@@ -111,28 +111,11 @@ export function Dashboard() {
     return () => { cancelled = true; };
   }, [user]);
 
-  if (!user || !profile) {
-    return (
-      <div className="flex h-96 flex-col items-center justify-center gap-4 text-center">
-        <p className="text-sm text-ink-500">You must be signed in to access the Academic Dashboard.</p>
-        <Link to="/login"><Button>Sign In</Button></Link>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-navy" />
-      </div>
-    );
-  }
-
   // Derived state
-  const userMemberships = members.filter((m) => m.userId === user.id && m.status === "active");
+  const userMemberships = members.filter((m) => m.userId === user?.id && m.status === "active");
   const activeProjectIds = new Set([
     ...userMemberships.map((m) => m.projectId),
-    ...projects.filter((p) => p.ownerId === user.id).map((p) => p.id),
+    ...projects.filter((p) => p.ownerId === user?.id).map((p) => p.id),
   ]);
   const activeProjects = projects.filter((p) => activeProjectIds.has(p.id));
 
@@ -174,7 +157,24 @@ export function Dashboard() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, loading, candidateProjectsLength, activeProjectIdsKey]);
+  }, [user?.id, profile, loading, candidateProjectsLength, activeProjectIdsKey]);
+
+  if (!user || !profile) {
+    return (
+      <div className="flex h-96 flex-col items-center justify-center gap-4 text-center">
+        <p className="text-sm text-ink-500">You must be signed in to access the Academic Dashboard.</p>
+        <Link to="/login"><Button>Sign In</Button></Link>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-navy" />
+      </div>
+    );
+  }
 
   const submittedApplications = joinRequests.filter(
     (jr) => jr.applicantId === user.id

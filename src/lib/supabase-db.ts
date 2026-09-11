@@ -41,6 +41,8 @@ import type {
   NotificationType,
   DocumentAccess,
   AiAnalysisRecord,
+  SkillScoreRecord,
+  SkillScoreAnalysis,
 } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -124,6 +126,7 @@ function rowToProfile(row: any, extras?: {
     githubConnected: row.github_connected ?? false,
     linkedinUrl: row.linkedin_url ?? undefined,
     portfolioUrl: row.portfolio_url ?? undefined,
+    resumeUrl: row.resume_url ?? undefined,
     availabilityHours: row.availability_hours ?? undefined,
     preferredTeamSize: row.preferred_team_size ?? undefined,
     preferredRoles: row.preferred_roles ?? [],
@@ -418,6 +421,7 @@ export async function saveProfile(userId: string, patch: Partial<Profile>) {
   if (patch.githubConnected !== undefined) profileUpdate.github_connected = patch.githubConnected;
   if (patch.linkedinUrl !== undefined) profileUpdate.linkedin_url = patch.linkedinUrl;
   if (patch.portfolioUrl !== undefined) profileUpdate.portfolio_url = patch.portfolioUrl;
+  if (patch.resumeUrl !== undefined) profileUpdate.resume_url = patch.resumeUrl;
   if (patch.availabilityHours !== undefined) profileUpdate.availability_hours = patch.availabilityHours;
   if (patch.preferredTeamSize !== undefined) profileUpdate.preferred_team_size = patch.preferredTeamSize;
   if (patch.preferredRoles !== undefined) profileUpdate.preferred_roles = patch.preferredRoles;
@@ -1877,4 +1881,211 @@ export async function getOrFetchProjectAnalyses(
   return results.sort(
     (a, b) => b.analysis.output_result.match_score - a.analysis.output_result.match_score
   );
+}
+
+// ---------------------------------------------------------------------------
+// SKILL SCORE ENGINE
+// ---------------------------------------------------------------------------
+// These functions are EXCLUSIVELY for the AI Skill Score Engine.
+// They do NOT interact with the AI Chatbot, analyze-project-fit, or any
+// other existing AI feature.
+// ---------------------------------------------------------------------------
+
+/**
+ * fetchLatestSkillScore
+ *
+ * Returns the most recent completed skill score analysis for the given user,
+ * or null if no analysis has been run yet.
+ *
+ * Uses the student_latest_skill_score view (latest per profile_id) when
+ * available, otherwise falls back to an ordered query on the base table.
+ */
+export async function fetchLatestSkillScore(
+  userId: string
+): Promise<SkillScoreRecord | null> {
+  if (!userId) return null;
+
+  try {
+    const { data, error } = await supabase!
+      .from("student_skill_scores")
+      .select(
+        "id, profile_id, overall_score, breakdown, skill_evidence, strengths, improvement_areas, summary, confidence, model_version, status, analyzed_at, created_at"
+      )
+      .eq("profile_id", userId)
+      .eq("status", "completed")
+      .order("analyzed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error("fetchLatestSkillScore error:", error.message);
+      return null;
+    }
+
+    if (!data) return null;
+
+    return rowToSkillScoreRecord(data);
+  } catch (err) {
+    console.error("fetchLatestSkillScore unexpected error:", err);
+    return null;
+  }
+}
+
+/**
+ * fetchSkillScoreHistory
+ *
+ * Returns the last N completed analyses for a student (newest first).
+ * Used for the score history / change display.
+ */
+export async function fetchSkillScoreHistory(
+  userId: string,
+  limit = 5
+): Promise<SkillScoreRecord[]> {
+  if (!userId) return [];
+
+  try {
+    const { data, error } = await supabase!
+      .from("student_skill_scores")
+      .select(
+        "id, profile_id, overall_score, breakdown, skill_evidence, strengths, improvement_areas, summary, confidence, model_version, status, analyzed_at, created_at"
+      )
+      .eq("profile_id", userId)
+      .eq("status", "completed")
+      .order("analyzed_at", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error("fetchSkillScoreHistory error:", error.message);
+      return [];
+    }
+
+    return (data ?? []).map(rowToSkillScoreRecord);
+  } catch (err) {
+    console.error("fetchSkillScoreHistory unexpected error:", err);
+    return [];
+  }
+}
+
+/**
+ * invokeSkillScoreAnalysis
+ *
+ * Calls the analyze-skill-score Supabase Edge Function.
+ * The Edge Function loads all profile evidence server-side, computes the
+ * score, persists it, and returns the saved SkillScoreRecord.
+ *
+ * Pass githubPublicRepos if the frontend has already fetched the live
+ * GitHub public repo count (via fetchGithubPublic).
+ *
+ * Returns the saved SkillScoreRecord, or null on failure.
+ */
+export async function invokeSkillScoreAnalysis(
+  githubPublicRepos?: number
+): Promise<SkillScoreRecord | null> {
+  try {
+    const body: Record<string, unknown> = {};
+    if (typeof githubPublicRepos === "number") {
+      body.github_public_repos = githubPublicRepos;
+    }
+
+    const { data, error } = await supabase!.functions.invoke("analyze-skill-score", {
+      body,
+    });
+
+    if (error) {
+      console.error("analyze-skill-score Edge Function error:", error.message ?? error);
+      return null;
+    }
+
+    if (!data?.success || !data?.analysis) {
+      console.error("analyze-skill-score returned unexpected payload:", data);
+      return null;
+    }
+
+    // Map the Edge Function response to a SkillScoreRecord
+    const a = data.analysis;
+    return {
+      id: a.id ?? "",
+      profileId: a.profileId ?? "",
+      overallScore: Number(a.overallScore ?? 0),
+      breakdown: a.breakdown ?? {},
+      skillEvidence: a.skillEvidence ?? [],
+      strengths: a.strengths ?? [],
+      improvementAreas: a.improvementAreas ?? [],
+      summary: a.summary ?? "",
+      confidence: a.confidence ?? "low",
+      analyzedAt: a.analyzedAt ?? new Date().toISOString(),
+      modelVersion: a.modelVersion ?? "skill-engine-v1",
+    };
+  } catch (err) {
+    console.error("invokeSkillScoreAnalysis unexpected error:", err);
+    return null;
+  }
+}
+
+/**
+ * saveSkillScoreLocally
+ *
+ * Persists a locally-computed SkillScoreAnalysis (from skillScoreEngine.ts)
+ * directly to the student_skill_scores table via the anon client.
+ *
+ * RLS enforces that the authenticated user may only insert their own rows.
+ * Use this as a fallback when the Edge Function is unavailable.
+ */
+export async function saveSkillScoreLocally(
+  userId: string,
+  analysis: SkillScoreAnalysis
+): Promise<SkillScoreRecord | null> {
+  if (!userId) return null;
+
+  try {
+    const { data, error } = await supabase!
+      .from("student_skill_scores")
+      .insert({
+        profile_id: userId,
+        overall_score: analysis.overallScore,
+        breakdown: analysis.breakdown,
+        skill_evidence: analysis.skillEvidence,
+        strengths: analysis.strengths,
+        improvement_areas: analysis.improvementAreas,
+        summary: analysis.summary,
+        confidence: analysis.confidence,
+        model_version: analysis.modelVersion,
+        status: "completed",
+        analyzed_at: analysis.analyzedAt,
+      })
+      .select(
+        "id, profile_id, overall_score, breakdown, skill_evidence, strengths, improvement_areas, summary, confidence, model_version, status, analyzed_at, created_at"
+      )
+      .single();
+
+    if (error) {
+      console.error("saveSkillScoreLocally error:", error.message);
+      return null;
+    }
+
+    return rowToSkillScoreRecord(data);
+  } catch (err) {
+    console.error("saveSkillScoreLocally unexpected error:", err);
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Internal helper: DB row → SkillScoreRecord
+// ---------------------------------------------------------------------------
+
+function rowToSkillScoreRecord(row: any): SkillScoreRecord {
+  return {
+    id: row.id,
+    profileId: row.profile_id,
+    overallScore: row.overall_score,
+    breakdown: row.breakdown ?? {},
+    skillEvidence: row.skill_evidence ?? [],
+    strengths: row.strengths ?? [],
+    improvementAreas: row.improvement_areas ?? [],
+    summary: row.summary ?? "",
+    confidence: row.confidence ?? "low",
+    analyzedAt: row.analyzed_at,
+    modelVersion: row.model_version ?? "skill-engine-v1",
+  };
 }

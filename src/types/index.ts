@@ -536,3 +536,79 @@ export interface AppState {
 
 export const AI_DISCLAIMER =
   "This is an AI-estimated compatibility score, not an objective measurement of ability. AI recommends; humans decide.";
+
+// ============================================================
+// SKILL SCORE ENGINE TYPES
+// ============================================================
+
+export type SkillEvidenceStatus = "SUPPORTED" | "PARTIALLY_SUPPORTED" | "UNVERIFIED" | "INSUFFICIENT_EVIDENCE";
+
+export interface SkillEvidenceItem {
+  /** The claimed skill name */
+  skill: string;
+  /** Self-declared proficiency level */
+  claimedLevel: Proficiency;
+  /** 0–100 evidence confidence score */
+  confidenceScore: number;
+  /** Categorical evidence status */
+  status: SkillEvidenceStatus;
+  /** Human-readable evidence sources that support this skill */
+  supportingEvidence: string[];
+  /** Human-readable note about what is missing */
+  gapNote?: string;
+}
+
+export interface SkillScoreBreakdown {
+  /** Score for listed skills weighted by evidence: 0–20 */
+  skillEvidence: number;
+  /** Score from past projects matching skills: 0–25 */
+  projectEvidence: number;
+  /** Score from GitHub profile connectivity and activity: 0–20 */
+  githubEvidence: number;
+  /** Score from internships/experience descriptions: 0–15 */
+  experienceEvidence: number;
+  /** Score from certifications: 0–10 */
+  certificationEvidence: number;
+  /** Score for consistency across sources: 0–5 */
+  consistencyScore: number;
+  /** Bonus for academic publications: 0–5 */
+  publicationBonus: number;
+}
+
+export interface SkillScoreAnalysis {
+  /** Validated overall score 0–100 */
+  overallScore: number;
+  /** Category-level breakdown */
+  breakdown: SkillScoreBreakdown;
+  /** Per-skill evidence analysis */
+  skillEvidence: SkillEvidenceItem[];
+  /** Human-readable strengths */
+  strengths: string[];
+  /** Human-readable improvement areas */
+  improvementAreas: string[];
+  /** Narrative summary */
+  summary: string;
+  /** Evidence confidence label */
+  confidence: AiConfidence;
+  /** ISO timestamp of when this analysis was generated */
+  analyzedAt: string;
+  /** Model/engine version that generated this */
+  modelVersion: string;
+}
+
+export interface SkillScoreRecord {
+  id: string;
+  profileId: string;
+  overallScore: number;
+  breakdown: SkillScoreBreakdown;
+  skillEvidence: SkillEvidenceItem[];
+  strengths: string[];
+  improvementAreas: string[];
+  summary: string;
+  confidence: AiConfidence;
+  analyzedAt: string;
+  modelVersion: string;
+}
+
+export const SKILL_SCORE_DISCLAIMER =
+  "This AI Skill Score is an evidence-based estimate using your profile data. It is not a certified assessment of your abilities. Self-reported data cannot be independently verified. The score reflects evidence consistency, not guaranteed real-world proficiency.";

@@ -32,6 +32,7 @@ import {
   FileText,
   X,
 } from "lucide-react";
+import { SkillScorePanel } from "@/components/ai/SkillScorePanel";
 
 export function Profile() {
   const { id } = useParams<{ id: string }>();
@@ -710,6 +711,11 @@ export function Profile() {
               )}
             </div>
           </Card>
+
+          {/* AI Skill Score Engine — own profile only */}
+          {isSelf && user && (
+            <SkillScorePanel userId={user.id} profile={profile} />
+          )}
         </div>
 
         {/* Right column: Past Projects, Internships, Certifications, Publications */}
