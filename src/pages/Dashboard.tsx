@@ -159,6 +159,34 @@ export function Dashboard() {
     };
   }, [user?.id, profile, loading, candidateProjectsLength, activeProjectIdsKey]);
 
+  // Collaborator recommendations
+  const sharedIds = useMemo(() => {
+    return new Set<string>(
+      members.filter((m) => activeProjectIds.has(m.projectId)).map((m) => m.userId)
+    );
+  }, [members, activeProjectIds]);
+
+  const recommendedCollaborators = useMemo(
+    () => {
+      if (!profile || !user) return [];
+      return recommendCollaborators(
+        profile,
+        allProfiles.filter((p) => p.userId !== user.id),
+        sharedIds
+      ).slice(0, 3);
+    },
+    [allProfiles, members, profile, user, sharedIds]
+  );
+
+  // Pre-compute member counts per project — avoids repeated .filter() inside render
+  const memberCountByProject = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const m of members) {
+      if (m.status === "active") map.set(m.projectId, (map.get(m.projectId) ?? 0) + 1);
+    }
+    return map;
+  }, [members]);
+
   if (!user || !profile) {
     return (
       <div className="flex h-96 flex-col items-center justify-center gap-4 text-center">
@@ -186,29 +214,6 @@ export function Dashboard() {
   const facultyMentorshipRequests = mentorshipRequests.filter(
     (mr) => mr.facultyId === user.id && mr.status === "pending"
   );
-
-  // Collaborator recommendations
-  const sharedIds = new Set<string>(
-    members.filter((m) => activeProjectIds.has(m.projectId)).map((m) => m.userId)
-  );
-  const recommendedCollaborators = useMemo(
-    () => recommendCollaborators(
-      profile,
-      allProfiles.filter((p) => p.userId !== user.id),
-      sharedIds
-    ).slice(0, 3),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allProfiles, members, profile]
-  );
-
-  // Pre-compute member counts per project — avoids repeated .filter() inside render
-  const memberCountByProject = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const m of members) {
-      if (m.status === "active") map.set(m.projectId, (map.get(m.projectId) ?? 0) + 1);
-    }
-    return map;
-  }, [members]);
 
   function getProjectStats(projectId: string) {
     return { membersCount: (memberCountByProject.get(projectId) ?? 0) + 1 };
