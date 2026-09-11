@@ -50,6 +50,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: { subscription } } = supabase!.auth.onAuthStateChange(async (_event, s) => {
       if (ignore) return;
+      // TOKEN_REFRESHED just rotates the JWT — no profile data changed, skip re-fetch
+      if (_event === "TOKEN_REFRESHED") return;
+      // INITIAL_SESSION fires right after getSession resolves and would double-load
+      // the profile that getSession already fetched — skip it when profile is loaded
+      if (_event === "INITIAL_SESSION" && profile) return;
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {

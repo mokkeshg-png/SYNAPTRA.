@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import {
   fetchProjects,
-  fetchProjectMembers,
+  fetchMembershipsByUser,
   fetchDiscussions,
   fetchReplies,
   fetchAllProfiles,
@@ -38,33 +38,33 @@ export function Messages() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
 
+  // Ref lets loadData read the current selectedProjectId without being a
+  // dependency — prevents the re-render cycle where loadData sets
+  // selectedProjectId, which recreates loadData, which fires the effect again.
+  const selectedProjectIdRef = useRef<string | null>(null);
+  selectedProjectIdRef.current = selectedProjectId;
+
   const loadData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const [allProjs, profiles] = await Promise.all([
+      // Single query: all projects the user belongs to — replaces N×fetchProjectMembers
+      const [allProjs, memberships, profiles] = await Promise.all([
         fetchProjects(),
+        fetchMembershipsByUser(user.id),
         fetchAllProfiles(),
       ]);
 
-      // Find projects where user is owner or active member
-      const activeProjs: Project[] = [];
-
-      await Promise.all(
-        allProjs.map(async (p) => {
-          const mems = await fetchProjectMembers(p.id);
-          const isMember = mems.some((m) => m.userId === user.id && m.status === "active");
-          const isOwner = p.ownerId === user.id;
-          if (isMember || isOwner) {
-            activeProjs.push(p);
-          }
-        })
+      const memberProjectIds = new Set(memberships.map((m) => m.projectId));
+      const activeProjs = allProjs.filter(
+        (p) => p.ownerId === user.id || memberProjectIds.has(p.id)
       );
 
       setProjects(activeProjs);
       setAllProfiles(profiles);
 
-      if (activeProjs.length > 0 && !selectedProjectId) {
+      // Only auto-select the first project if none is selected yet
+      if (activeProjs.length > 0 && !selectedProjectIdRef.current) {
         setSelectedProjectId(activeProjs[0].id);
       }
     } catch (err) {
@@ -72,13 +72,14 @@ export function Messages() {
     } finally {
       setLoading(false);
     }
-  }, [user, selectedProjectId]);
+    // selectedProjectId intentionally excluded — read via ref to avoid loop
+  }, [user]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  // Load discussions for selected project
+  // Load discussions when selected project changes
   useEffect(() => {
     if (!selectedProjectId) return;
     let cancelled = false;
@@ -86,26 +87,19 @@ export function Messages() {
       const discs = await fetchDiscussions(selectedProjectId!);
       if (!cancelled) {
         setDiscussions(discs);
-        const currentTargetId = selectedDiscussionId && discs.some((d) => d.id === selectedDiscussionId)
-          ? selectedDiscussionId
-          : discs.length > 0
-          ? discs[0].id
-          : null;
-
+        // Set the target discussion — replies are loaded by the
+        // selectedDiscussionId effect below (avoids double fetch)
+        const currentTargetId =
+          selectedDiscussionId && discs.some((d) => d.id === selectedDiscussionId)
+            ? selectedDiscussionId
+            : discs.length > 0
+            ? discs[0].id
+            : null;
         setSelectedDiscussionId(currentTargetId);
-
-        if (currentTargetId) {
-          const reps = await fetchReplies(currentTargetId);
-          if (!cancelled) setReplies(reps);
-        } else {
-          setReplies([]);
-        }
       }
     }
     loadDisc();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [selectedProjectId]);
 
   // Load replies when selected discussion changes

@@ -7,6 +7,7 @@ import {
   fetchAllProfiles,
   fetchTasks,
   fetchTaskComments,
+  fetchTaskCommentsByProject,
   fetchMilestones,
   fetchResearchNotes,
   fetchReferences,
@@ -155,11 +156,10 @@ export function ProjectRoom() {
     setProjectActivity(activity);
 
     // Load comments for all tasks
-    const allComments: any[] = [];
-    await Promise.all(tasks.map(async (t: any) => {
-      const cs = await fetchTaskComments(t.id);
-      allComments.push(...cs);
-    }));
+    // Load all task comments in a single batch query — replaces N×fetchTaskComments
+    const allComments = tasks.length > 0
+      ? await fetchTaskCommentsByProject(tasks.map((t: any) => t.id))
+      : [];
     setTaskComments(allComments);
 
     setDataLoading(false);

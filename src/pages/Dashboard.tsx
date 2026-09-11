@@ -2,13 +2,14 @@
 import { saveProfile } from "@/lib/supabase-db";
 import { Modal } from "@/components/ui/Modal";
 import { Field, Input, Select } from "@/components/ui/Field";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import {
   fetchProjects,
-  fetchProjectMembers,
+  fetchProjectMembersByProjects,
   fetchJoinRequests,
+  fetchJoinRequestsByProjects,
   fetchMentorshipRequests,
   reviewMentorship,
   reviewApplication,
@@ -80,20 +81,19 @@ export function Dashboard() {
         const ownedProjectIds = new Set(projs.filter((p) => p.ownerId === user!.id).map((p) => p.id));
         const appliedProjectIds = new Set(jrs.filter((jr) => jr.status === "accepted").map((jr) => jr.projectId));
         const connectedProjectIds = new Set([...ownedProjectIds, ...appliedProjectIds]);
+        const connectedIds = [...connectedProjectIds];
 
+        // Single batch query — replaces N×fetchProjectMembers
+        const membersMap = await fetchProjectMembersByProjects(connectedIds);
         const allMembers: ProjectMember[] = [];
-        const allReceivedJrs: JoinRequest[] = [];
+        for (const members of membersMap.values()) allMembers.push(...members);
 
-        await Promise.all(
-          [...connectedProjectIds].map(async (pid) => {
-            const [ms, pjrs] = await Promise.all([
-              fetchProjectMembers(pid),
-              ownedProjectIds.has(pid) ? fetchJoinRequests(pid) : Promise.resolve([]),
-            ]);
-            allMembers.push(...ms);
-            allReceivedJrs.push(...pjrs);
-          })
-        );
+        // Fetch incoming join requests for owned projects in one batch query
+        const allReceivedJrs = connectedIds.length > 0
+          ? await fetchJoinRequestsByProjects([...ownedProjectIds]).then((rows) =>
+              rows.filter((jr) => jr.applicantId !== user!.id)
+            )
+          : [];
 
         if (cancelled) return;
         setProjects(projs);
@@ -191,16 +191,27 @@ export function Dashboard() {
   const sharedIds = new Set<string>(
     members.filter((m) => activeProjectIds.has(m.projectId)).map((m) => m.userId)
   );
-  const recommendedCollaborators = recommendCollaborators(
-    profile,
-    allProfiles.filter((p) => p.userId !== user.id),
-    sharedIds
-  ).slice(0, 3);
+  const recommendedCollaborators = useMemo(
+    () => recommendCollaborators(
+      profile,
+      allProfiles.filter((p) => p.userId !== user.id),
+      sharedIds
+    ).slice(0, 3),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allProfiles, members, profile]
+  );
 
-  // Task progress per project
+  // Pre-compute member counts per project — avoids repeated .filter() inside render
+  const memberCountByProject = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const m of members) {
+      if (m.status === "active") map.set(m.projectId, (map.get(m.projectId) ?? 0) + 1);
+    }
+    return map;
+  }, [members]);
+
   function getProjectStats(projectId: string) {
-    const projectMembers = members.filter((m) => m.projectId === projectId && m.status === "active");
-    return { membersCount: projectMembers.length + 1 };
+    return { membersCount: (memberCountByProject.get(projectId) ?? 0) + 1 };
   }
 
   const handleWithdraw = async (reqId: string) => {
@@ -318,7 +329,7 @@ export function Dashboard() {
       </div>
 
       {/* Quick Action Navigation Hub */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <button
           onClick={() => setAddSkillOpen(true)}
           className="flex flex-col items-center justify-center p-3 rounded-xl border border-ink-100 bg-white hover:border-navy hover:bg-navy-50/30 transition-all text-center group shadow-2xs"
@@ -328,6 +339,17 @@ export function Dashboard() {
           </div>
           <span className="font-semibold text-xs text-ink">My Skills</span>
           <span className="text-[10px] text-ink-400">{profile.skills.length} mapped</span>
+        </button>
+
+        <button
+          onClick={() => setAddInterestOpen(true)}
+          className="flex flex-col items-center justify-center p-3 rounded-xl border border-ink-100 bg-white hover:border-brass hover:bg-brass-50/30 transition-all text-center group shadow-2xs"
+        >
+          <div className="h-8 w-8 rounded-lg bg-brass-50 text-brass-800 flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
+            <Layers className="h-4 w-4" />
+          </div>
+          <span className="font-semibold text-xs text-ink">My Interests</span>
+          <span className="text-[10px] text-ink-400">{profile.interests.length} domains</span>
         </button>
 
         <Link
@@ -391,6 +413,7 @@ export function Dashboard() {
         </Link>
       </div>
 
+      {/* Profile Completeness Alert */}
       {/* Profile Completeness Alert */}
       {profile.profileCompleteness < 100 && (
         <div className="rounded-xl border border-brass-200 bg-brass-50/60 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

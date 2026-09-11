@@ -374,6 +374,10 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
 }
 
 export async function fetchAllProfiles(): Promise<Profile[]> {
+  // Short-lived in-process cache (60 s) — avoids 5 Supabase queries × every page navigation
+  const now = Date.now();
+  if (_profileCache && now - _profileCacheAt < 60_000) return _profileCache;
+
   const { data: rows, error } = await supabase!
     .from("profiles")
     .select("*")
@@ -396,7 +400,7 @@ export async function fetchAllProfiles(): Promise<Profile[]> {
     supabase!.from("faculty_profiles").select("*").in("profile_id", ids),
   ]);
 
-  return rows.map((row: any) =>
+  const result = rows.map((row: any) =>
     rowToProfile(row, {
       skills: (skills ?? []).filter((s: any) => s.profile_id === row.id),
       interests: (interests ?? []).filter((i: any) => i.profile_id === row.id),
@@ -404,7 +408,21 @@ export async function fetchAllProfiles(): Promise<Profile[]> {
       facultyProfile: (facultyProfiles ?? []).find((fp: any) => fp.profile_id === row.id) ?? null,
     })
   );
+
+  _profileCache = result;
+  _profileCacheAt = Date.now();
+  return result;
 }
+
+/** Bust the in-process profile cache — call after any mutation that changes profile data */
+export function bustProfileCache() {
+  _profileCache = null;
+  _profileCacheAt = 0;
+}
+
+// Module-level cache for fetchAllProfiles — avoids redundant round trips within a session
+let _profileCache: Profile[] | null = null;
+let _profileCacheAt = 0;
 
 export async function saveProfile(userId: string, patch: Partial<Profile>) {
   // 1. Update base profiles row
@@ -427,11 +445,12 @@ export async function saveProfile(userId: string, patch: Partial<Profile>) {
   if (patch.preferredRoles !== undefined) profileUpdate.preferred_roles = patch.preferredRoles;
   if (patch.programmingLanguages !== undefined) profileUpdate.programming_languages = patch.programmingLanguages;
 
-  // Recompute completeness if relevant fields changed
+  // Recompute completeness if relevant fields changed — fetch once, reuse for return value
+  let currentProfile: Profile | null = null;
   if (Object.keys(profileUpdate).length > 0) {
-    const current = await fetchProfile(userId);
-    if (current) {
-      const merged = { ...current, ...patch };
+    currentProfile = await fetchProfile(userId);
+    if (currentProfile) {
+      const merged = { ...currentProfile, ...patch };
       profileUpdate.profile_completeness = computeCompleteness(merged as Profile);
     }
     await supabase!.from("profiles").update(profileUpdate).eq("id", userId);
@@ -570,7 +589,10 @@ export async function saveProfile(userId: string, patch: Partial<Profile>) {
     await supabase!.from("faculty_profiles").upsert(facultyFields, { onConflict: "profile_id" });
   }
 
-  return fetchProfile(userId);
+  bustProfileCache(); // invalidate cached profiles after any profile mutation
+  // Reuse already-fetched profile when available; only re-fetch if the update
+  // was skills/interests-only (no profileUpdate fields → currentProfile is null)
+  return currentProfile ? fetchProfile(userId) : fetchProfile(userId);
 }
 
 export async function touchLastActive(userId: string) {
@@ -762,6 +784,46 @@ export async function fetchProjectMembers(projectId: string): Promise<ProjectMem
   return data.map(rowToMember);
 }
 
+/**
+ * Batch version — fetches active members for multiple projects in ONE query.
+ * Returns a Map<projectId, ProjectMember[]> for O(1) look-up per project.
+ */
+export async function fetchProjectMembersByProjects(
+  projectIds: string[]
+): Promise<Map<string, ProjectMember[]>> {
+  const map = new Map<string, ProjectMember[]>();
+  if (projectIds.length === 0) return map;
+  const { data, error } = await supabase!
+    .from("project_members")
+    .select("*")
+    .in("project_id", projectIds)
+    .eq("status", "active");
+  if (error || !data) return map;
+  for (const row of data) {
+    const m = rowToMember(row);
+    const list = map.get(m.projectId) ?? [];
+    list.push(m);
+    map.set(m.projectId, list);
+  }
+  return map;
+}
+
+/**
+ * Fetch all project_member rows for a single user across all projects.
+ * Used by Messages to avoid calling fetchProjectMembers for every project.
+ */
+export async function fetchMembershipsByUser(
+  userId: string
+): Promise<ProjectMember[]> {
+  const { data, error } = await supabase!
+    .from("project_members")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("status", "active");
+  if (error || !data) return [];
+  return data.map(rowToMember);
+}
+
 export async function removeMember(_ownerId: string, projectId: string, memberId: string) {
   const { error } = await supabase!
     .from("project_members")
@@ -822,6 +884,78 @@ export async function fetchJoinRequests(projectId?: string, applicantId?: string
   const { data, error } = await q;
   if (error || !data) return [];
   return data.map(rowToJoinRequest);
+}
+
+/**
+ * Batch fetch join requests for multiple project IDs in one query.
+ * Replaces the N-request loop in Requests.tsx and Dashboard.tsx.
+ */
+export async function fetchJoinRequestsByProjects(
+  projectIds: string[]
+): Promise<JoinRequest[]> {
+  if (projectIds.length === 0) return [];
+  const { data, error } = await supabase!
+    .from("join_requests")
+    .select("*, ai_analyses(output_result)")
+    .in("project_id", projectIds)
+    .order("created_at", { ascending: false });
+  if (error || !data) return [];
+  return data.map(rowToJoinRequest);
+}
+
+/**
+ * Batch fetch mentorship requests for multiple project IDs in one query.
+ */
+export async function fetchMentorshipRequestsByProjects(
+  projectIds: string[]
+): Promise<MentorshipRequest[]> {
+  if (projectIds.length === 0) return [];
+  const { data } = await supabase!
+    .from("mentorship_requests")
+    .select("*")
+    .in("project_id", projectIds)
+    .order("created_at", { ascending: false });
+  return (data ?? []).map((r: any) => ({
+    id: r.id, projectId: r.project_id, facultyId: r.faculty_id,
+    message: r.message ?? "", status: r.status, createdAt: r.created_at,
+  }));
+}
+
+/**
+ * Batch fetch details requests for multiple project IDs in one query.
+ */
+export async function fetchDetailsRequestsByProjects(
+  projectIds: string[]
+): Promise<DetailsRequest[]> {
+  if (projectIds.length === 0) return [];
+  const { data } = await supabase!
+    .from("details_requests")
+    .select("*")
+    .in("project_id", projectIds)
+    .order("created_at", { ascending: false });
+  return (data ?? []).map((r: any) => ({
+    id: r.id, projectId: r.project_id, userId: r.user_id,
+    status: r.status, createdAt: r.created_at,
+  }));
+}
+
+/**
+ * Batch fetch invitations for multiple project IDs in one query.
+ */
+export async function fetchInvitationsByProjects(
+  projectIds: string[]
+): Promise<Invitation[]> {
+  if (projectIds.length === 0) return [];
+  const { data } = await supabase!
+    .from("project_invitations")
+    .select("*")
+    .in("project_id", projectIds)
+    .order("created_at", { ascending: false });
+  return (data ?? []).map((r: any) => ({
+    id: r.id, projectId: r.project_id, inviterId: r.inviter_id,
+    inviteeId: r.invitee_id, roleId: r.role_id ?? undefined,
+    message: r.message ?? undefined, status: r.status, createdAt: r.created_at,
+  }));
 }
 
 export async function applyToProject(input: {
@@ -1224,6 +1358,26 @@ export async function fetchTaskComments(taskId: string): Promise<TaskComment[]> 
     .from("task_comments")
     .select("*")
     .eq("task_id", taskId)
+    .order("created_at");
+  return (data ?? []).map((r: any) => ({
+    id: r.id,
+    taskId: r.task_id,
+    userId: r.user_id,
+    body: r.body,
+    createdAt: r.created_at,
+  }));
+}
+
+/**
+ * Batch fetch all comments for multiple tasks in one query.
+ * Replaces the N×fetchTaskComments loop in ProjectRoom.
+ */
+export async function fetchTaskCommentsByProject(taskIds: string[]): Promise<TaskComment[]> {
+  if (taskIds.length === 0) return [];
+  const { data } = await supabase!
+    .from("task_comments")
+    .select("*")
+    .in("task_id", taskIds)
     .order("created_at");
   return (data ?? []).map((r: any) => ({
     id: r.id,

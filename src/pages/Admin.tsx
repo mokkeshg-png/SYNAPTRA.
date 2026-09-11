@@ -89,8 +89,9 @@ export function Admin() {
   const completedProjects = projects.filter((p) => p.status === "completed").length;
   const pendingReports = reports.filter((r) => r.status === "pending").length;
 
-  const studentsCount = profiles.filter(p => !p.designation).length;
-  const teachersCount = profiles.filter(p => !!p.designation).length;
+  const studentsCount = profiles.filter(p => p.role === "student" && !p.designation).length;
+  const teachersCount = profiles.filter(p => p.role === "faculty" || !!p.designation).length;
+  const adminsCount = profiles.filter(p => p.role === "admin").length;
 
   const allSkills = profiles.flatMap(p => p.skills || []).map(s => s.skill);
   const skillCounts = allSkills.reduce((acc, skill) => {
@@ -103,9 +104,10 @@ export function Admin() {
     .map(([skill, count]) => ({ skill, count, percentage: Math.round((count / Math.max(allSkills.length, 1)) * 100) }));
 
   const filteredUsers = profiles.filter((p) => {
-    const isFaculty = !!p.designation;
+    const isFaculty = p.role === "faculty" || !!p.designation;
+    const isAdmin = p.role === "admin";
     if (userRoleFilter === "faculty" && !isFaculty) return false;
-    if (userRoleFilter === "student" && isFaculty) return false;
+    if (userRoleFilter === "student" && (isFaculty || isAdmin)) return false;
     if (userSearch.trim()) {
       const q = userSearch.toLowerCase();
       if (!p.fullName.toLowerCase().includes(q) && !p.institution.toLowerCase().includes(q)) return false;
@@ -201,7 +203,7 @@ export function Admin() {
                 <span className="text-xs font-semibold text-ink-400 uppercase tracking-wider">Total Users</span>
                 <p className="font-serif text-3xl font-bold text-ink mt-1">{totalUsers}</p>
               </div>
-              <span className="text-xs text-navy font-medium mt-2">{studentsCount} Students • {teachersCount} Teachers</span>
+              <span className="text-xs text-navy font-medium mt-2">{studentsCount} Students • {teachersCount} Faculty{adminsCount > 0 ? ` • ${adminsCount} Admin` : ""}</span>
             </Card>
             <Card className="p-4 flex flex-col justify-between">
               <div>
@@ -289,7 +291,9 @@ export function Admin() {
                       <Link to={`/profile/${p.userId}`} className="font-semibold text-ink hover:underline">{p.fullName}</Link>
                     </td>
                     <td className="px-4 py-3">
-                      <Badge tone={p.designation ? "brass" : "navy"}>{p.designation ? "FACULTY" : "STUDENT"}</Badge>
+                      <Badge tone={p.role === "admin" ? "red" : p.designation || p.role === "faculty" ? "brass" : "navy"}>
+                      {p.role === "admin" ? "ADMIN" : p.designation ? "FACULTY" : "STUDENT"}
+                    </Badge>
                     </td>
                     <td className="px-4 py-3">{p.institution}</td>
                     <td className="px-4 py-3 text-right space-x-2">
