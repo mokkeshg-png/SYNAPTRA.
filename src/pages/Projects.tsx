@@ -63,7 +63,9 @@ export function Projects() {
   const sortedProjects = useMemo(() => {
     const list = [...filteredProjects];
     if (sortBy === "match" && profile) {
-      return list.sort((a, b) => projectMatchBreakdown(profile, b).score - projectMatchBreakdown(profile, a).score);
+      // Pre-compute scores once — avoids O(n log n) × 2 calls in the comparator
+      const scores = new Map(list.map((p) => [p.id, projectMatchBreakdown(profile, p).score]));
+      return list.sort((a, b) => (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0));
     }
     if (sortBy === "recent") {
       return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());

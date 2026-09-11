@@ -4,9 +4,13 @@ import { useAuth } from "@/context/AuthContext";
 import {
   fetchProjects,
   fetchJoinRequests,
+  fetchJoinRequestsByProjects,
   fetchInvitations,
+  fetchInvitationsByProjects,
   fetchMentorshipRequests,
+  fetchMentorshipRequestsByProjects,
   fetchDetailsRequests,
+  fetchDetailsRequestsByProjects,
   fetchAllProfiles,
   reviewApplication,
   withdrawApplication,
@@ -82,36 +86,31 @@ export function Requests() {
       ]);
 
       const ownedProjectIds = new Set(projs.filter((p) => p.ownerId === user.id).map((p) => p.id));
+      const ownedIds = [...ownedProjectIds];
 
-      // Fetch incoming requests for owned projects
-      const allIncomingJrs: JoinRequest[] = [];
-      const allIncomingMrs: MentorshipRequest[] = [];
-      const allIncomingDrs: DetailsRequest[] = [];
-      const allSentInvs: Invitation[] = [];
+      // Batch: 4 queries instead of 4×N — one per table, all owned projects at once
+      const [allIncomingJrs, allIncomingMrs, allIncomingDrs, allSentInvsRaw] =
+        ownedIds.length > 0
+          ? await Promise.all([
+              fetchJoinRequestsByProjects(ownedIds),
+              fetchMentorshipRequestsByProjects(ownedIds),
+              fetchDetailsRequestsByProjects(ownedIds),
+              fetchInvitationsByProjects(ownedIds),
+            ])
+          : [[], [], [], []];
 
-      await Promise.all(
-        [...ownedProjectIds].map(async (pid) => {
-          const [jrs, mrs, drs, invs] = await Promise.all([
-            fetchJoinRequests(pid),
-            fetchMentorshipRequests(pid),
-            fetchDetailsRequests(pid),
-            fetchInvitations(undefined, pid),
-          ]);
-          allIncomingJrs.push(...jrs.filter((jr) => jr.applicantId !== user.id));
-          allIncomingMrs.push(...mrs);
-          allIncomingDrs.push(...drs.filter((dr) => dr.userId !== user.id));
-          allSentInvs.push(...invs.filter((inv) => inv.inviterId === user.id));
-        })
-      );
+      const allIncomingJrsFiltered = allIncomingJrs.filter((jr) => jr.applicantId !== user.id);
+      const allIncomingDrsFiltered = allIncomingDrs.filter((dr) => dr.userId !== user.id);
+      const allSentInvs = allSentInvsRaw.filter((inv) => inv.inviterId === user.id);
 
       setProjects(projs);
       setAllProfiles(profiles);
-      setIncomingJrs(allIncomingJrs);
+      setIncomingJrs(allIncomingJrsFiltered);
       setOutgoingJrs(myJrs);
       setInvitationsReceived(myInvs);
       setInvitationsSent(allSentInvs);
       setMentorshipReqs([...myMrs, ...allIncomingMrs.filter((m) => !myMrs.some((x) => x.id === m.id))]);
-      setDetailsReqs([...myDrs, ...allIncomingDrs.filter((d) => !myDrs.some((x) => x.id === d.id))]);
+      setDetailsReqs([...myDrs, ...allIncomingDrsFiltered.filter((d) => !myDrs.some((x) => x.id === d.id))]);
     } catch (err) {
       console.error("Requests load error:", err);
     } finally {
