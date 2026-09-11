@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { createProject } from "@/lib/supabase-db";
+import { createProject, fetchSkillsFromDB, fetchResearchInterestsFromDB } from "@/lib/supabase-db";
 import { newRole } from "@/lib/store";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input, Textarea, Select } from "@/components/ui/Field";
-import { RESEARCH_DOMAINS, ALL_SKILLS } from "@/lib/taxonomies";
+
 import {
   PROJECT_TYPES,
   ROLE_TEMPLATES,
@@ -39,6 +39,16 @@ export function ProjectCreate() {
   const [domains, setDomains] = useState<string[]>(["Artificial Intelligence"]);
   const [interests, setInterests] = useState<string[]>([]);
   const [requiredSkills, setRequiredSkills] = useState<string[]>(["Python", "PyTorch"]);
+
+  const [allDomains, setAllDomains] = useState<string[]>([]);
+  const [allSkills, setAllSkills] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchResearchInterestsFromDB().then((res) => { if (!cancelled) setAllDomains(res); });
+    fetchSkillsFromDB().then((res) => { if (!cancelled) setAllSkills(res); });
+    return () => { cancelled = true; };
+  }, []);
 
   // Roles configuration
   const [roles, setRoles] = useState<ProjectRole[]>([
@@ -350,7 +360,7 @@ export function ProjectCreate() {
               Primary Research Domains ({domains.length} selected)
             </label>
             <div className="flex flex-wrap gap-1.5">
-              {RESEARCH_DOMAINS.map((d) => {
+              {allDomains.map((d) => {
                 const sel = domains.includes(d);
                 return (
                   <button
@@ -374,7 +384,7 @@ export function ProjectCreate() {
               Research Interests ({interests.length} selected)
             </label>
             <div className="flex flex-wrap gap-1.5">
-              {RESEARCH_DOMAINS.map((i) => {
+              {allDomains.map((i) => {
                 const sel = interests.includes(i);
                 return (
                   <button
@@ -398,7 +408,7 @@ export function ProjectCreate() {
               Required Technical Skills ({requiredSkills.length} selected)
             </label>
             <div className="flex flex-wrap gap-1.5">
-              {ALL_SKILLS.map((s: string) => {
+              {allSkills.map((s: string) => {
                 const sel = requiredSkills.includes(s);
                 return (
                   <button

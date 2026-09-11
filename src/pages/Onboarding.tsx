@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { saveProfile } from "@/lib/supabase-db";
+import { saveProfile, fetchSkillsFromDB, fetchResearchInterestsFromDB } from "@/lib/supabase-db";
 import { computeCompleteness } from "@/lib/completeness";
 import { Button } from "@/components/ui/Button";
 import { Card, Badge, Progress } from "@/components/ui/Card";
 import { Field, Input, Textarea, Select } from "@/components/ui/Field";
-import { ALL_SKILLS, RESEARCH_DOMAINS } from "@/lib/taxonomies";
+
 import { ROLE_TEMPLATES, type Proficiency, type UserSkill, type PastProject, type Internship } from "@/types";
 import {
   User,
@@ -80,6 +80,16 @@ export function Onboarding() {
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [allDomains, setAllDomains] = useState<string[]>([]);
+  const [allSkills, setAllSkills] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchResearchInterestsFromDB().then((res) => { if (!cancelled) setAllDomains(res); });
+    fetchSkillsFromDB().then((res) => { if (!cancelled) setAllSkills(res); });
+    return () => { cancelled = true; };
+  }, []);
 
   if (!user || !profile) {
     return (
@@ -413,7 +423,7 @@ export function Onboarding() {
                 Popular Academic Skills (Click to Add):
               </p>
               <div className="flex flex-wrap gap-1.5">
-                {ALL_SKILLS.map((skill: string) => {
+                {allSkills.map((skill: string) => {
                   const has = skills.some((s) => s.skill.toLowerCase() === skill.toLowerCase());
                   return (
                     <button
@@ -489,7 +499,7 @@ export function Onboarding() {
                 Academic Taxonomy Domains:
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {RESEARCH_DOMAINS.map((domain) => {
+                {allDomains.map((domain) => {
                   const selected = interests.includes(domain);
                   return (
                     <button

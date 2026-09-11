@@ -1,12 +1,12 @@
 import { useState, useMemo, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { fetchAllProfiles, fetchProjects, inviteUser } from "@/lib/supabase-db";
+import { fetchAllProfiles, fetchProjects, inviteUser, fetchSkillsFromDB } from "@/lib/supabase-db";
 import { PersonCard } from "@/components/projects/ProjectCard";
 import { Button } from "@/components/ui/Button";
 import { Input, Select } from "@/components/ui/Field";
 import { EmptyState } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
-import { INSTITUTIONS, ALL_SKILLS } from "@/lib/taxonomies";
+import { INSTITUTIONS } from "@/lib/taxonomies";
 import type { Profile, Project } from "@/types";
 import { Search, Users, Mail, Loader2 } from "lucide-react";
 
@@ -14,6 +14,7 @@ export function Collaborators() {
   const { user } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [ownedProjects, setOwnedProjects] = useState<Project[]>([]);
+  const [allSkills, setAllSkills] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [query, setQuery] = useState("");
@@ -32,13 +33,15 @@ export function Collaborators() {
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      const [profs, projs] = await Promise.all([
+      const [profs, projs, skills] = await Promise.all([
         fetchAllProfiles(),
         user ? fetchProjects() : Promise.resolve([]),
+        fetchSkillsFromDB(),
       ]);
       if (cancelled) return;
       setProfiles(profs);
       setOwnedProjects(projs.filter((p) => p.ownerId === user?.id && p.status === "open"));
+      setAllSkills(skills);
       setLoading(false);
     }
     load();
@@ -128,7 +131,7 @@ export function Collaborators() {
           </Select>
           <Select value={selectedSkill} onChange={(e) => setSelectedSkill(e.target.value)}>
             <option value="all">All Primary Skills</option>
-            {ALL_SKILLS.map((s: string) => <option key={s} value={s}>{s}</option>)}
+            {allSkills.map((s: string) => <option key={s} value={s}>{s}</option>)}
           </Select>
         </div>
       </div>

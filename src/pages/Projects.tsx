@@ -1,12 +1,12 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { fetchProjects } from "@/lib/supabase-db";
+import { fetchProjects, fetchSkillsFromDB, fetchResearchInterestsFromDB } from "@/lib/supabase-db";
 import { ProjectCard } from "@/components/projects/ProjectCard";
 import { Button } from "@/components/ui/Button";
 import { Input, Select } from "@/components/ui/Field";
 import { EmptyState } from "@/components/ui/Card";
-import { RESEARCH_DOMAINS, ALL_SKILLS } from "@/lib/taxonomies";
+
 import { PROJECT_TYPES, ROLE_TEMPLATES } from "@/types";
 import { projectMatchBreakdown } from "@/lib/matching";
 import type { Project } from "@/types";
@@ -15,6 +15,8 @@ import { Search, Plus, Compass, X, Loader2 } from "lucide-react";
 export function Projects() {
   const { profile } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [allDomains, setAllDomains] = useState<string[]>([]);
+  const [allSkills, setAllSkills] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [query, setQuery] = useState("");
@@ -30,6 +32,12 @@ export function Projects() {
     let cancelled = false;
     fetchProjects().then((projs) => {
       if (!cancelled) { setProjects(projs); setLoading(false); }
+    });
+    fetchResearchInterestsFromDB().then((domains) => {
+      if (!cancelled) setAllDomains(domains);
+    });
+    fetchSkillsFromDB().then((skills) => {
+      if (!cancelled) setAllSkills(skills);
     });
     return () => { cancelled = true; };
   }, []);
@@ -136,7 +144,7 @@ export function Projects() {
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 pt-1">
           <Select value={selectedDomain} onChange={(e) => setSelectedDomain(e.target.value)}>
             <option value="all">All Domains</option>
-            {RESEARCH_DOMAINS.map((d) => <option key={d} value={d}>{d}</option>)}
+            {allDomains.map((d) => <option key={d} value={d}>{d}</option>)}
           </Select>
           <Select value={selectedRole} onChange={(e) => setSelectedRole(e.target.value)}>
             <option value="all">All Open Roles</option>
@@ -144,7 +152,7 @@ export function Projects() {
           </Select>
           <Select value={selectedSkill} onChange={(e) => setSelectedSkill(e.target.value)}>
             <option value="all">All Required Skills</option>
-            {ALL_SKILLS.map((s: string) => <option key={s} value={s}>{s}</option>)}
+            {allSkills.map((s: string) => <option key={s} value={s}>{s}</option>)}
           </Select>
           <Select value={selectedDifficulty} onChange={(e) => setSelectedDifficulty(e.target.value)}>
             <option value="all">All Difficulties</option>

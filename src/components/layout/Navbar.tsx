@@ -2,8 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useNotifications } from "@/context/NotificationContext";
-import { login } from "@/lib/store";
-import { DEMO_CREDENTIALS } from "@/lib/seed";
 import {
   Bell,
   Menu,
@@ -25,7 +23,7 @@ import {
 } from "lucide-react";
 
 export function Navbar() {
-  const { user, profile, logout, refresh } = useAuth();
+  const { user, profile, logout } = useAuth();
   const { items, unread, markRead, markAll } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,11 +31,9 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [roleSwitchOpen, setRoleSwitchOpen] = useState(false);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
-  const roleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -47,24 +43,10 @@ export function Navbar() {
       if (userRef.current && !userRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
       }
-      if (roleRef.current && !roleRef.current.contains(e.target as Node)) {
-        setRoleSwitchOpen(false);
-      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const handleRoleSwitch = async (email: string) => {
-    try {
-      await login(email, DEMO_CREDENTIALS.password);
-      refresh();
-      setRoleSwitchOpen(false);
-      navigate("/dashboard");
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const navLinks = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, authRequired: true },
@@ -77,13 +59,6 @@ export function Navbar() {
       ? [{ name: "Admin Center", href: "/admin", icon: Shield, authRequired: true }]
       : []),
   ];
-
-  const currentRoleLabel = () => {
-    if (!user) return "Guest";
-    if (profile?.role === "admin") return "Admin";
-    if (profile?.role === "faculty") return "Faculty";
-    return "Student";
-  };
 
   return (
     <header className="sticky top-0 z-40 border-b border-ink-100 bg-white/95 backdrop-blur-md">
@@ -132,80 +107,6 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           {user ? (
             <>
-              {/* Quick Role Switcher (Academic pair testing) */}
-              <div className="relative" ref={roleRef}>
-                <button
-                  onClick={() => setRoleSwitchOpen(!roleSwitchOpen)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-brass-200 bg-brass-50/80 px-2.5 py-1 text-xs font-medium text-brass-700 hover:bg-brass-100 transition-colors"
-                  title="Switch demo persona"
-                >
-                  <span className="h-2 w-2 rounded-full bg-brass animate-pulse" />
-                  Role: <strong className="text-brass-900">{currentRoleLabel()}</strong>
-                  <ChevronDown className="h-3 w-3 text-brass-600" />
-                </button>
-
-                {roleSwitchOpen && (
-                  <div className="absolute right-0 mt-2 w-64 rounded-xl border border-ink-100 bg-white p-2 shadow-lift z-50 animate-in fade-in slide-in-from-top-1">
-                    <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-ink-400 border-b border-ink-50">
-                      Switch Active Persona
-                    </div>
-                    <div className="py-1 space-y-1">
-                      <button
-                        onClick={() => handleRoleSwitch(DEMO_CREDENTIALS.student)}
-                        className={`w-full text-left px-3 py-2 text-xs rounded-lg transition-colors flex items-center justify-between ${
-                          user?.email === DEMO_CREDENTIALS.student ? "bg-navy-50 font-bold text-navy" : "hover:bg-paper-100 text-ink-700"
-                        }`}
-                      >
-                        <div>
-                          <div className="font-medium text-ink">Rahul Mehta</div>
-                          <div className="text-[11px] text-ink-400">Student (AI/ML Researcher)</div>
-                        </div>
-                        {user?.email === DEMO_CREDENTIALS.student && <span className="text-navy text-xs">Active</span>}
-                      </button>
-
-                      <button
-                        onClick={() => handleRoleSwitch(DEMO_CREDENTIALS.owner)}
-                        className={`w-full text-left px-3 py-2 text-xs rounded-lg transition-colors flex items-center justify-between ${
-                          user?.email === DEMO_CREDENTIALS.owner ? "bg-navy-50 font-bold text-navy" : "hover:bg-paper-100 text-ink-700"
-                        }`}
-                      >
-                        <div>
-                          <div className="font-medium text-ink">Arjun Nair</div>
-                          <div className="text-[11px] text-ink-400">Project Owner (Plant Disease)</div>
-                        </div>
-                        {user?.email === DEMO_CREDENTIALS.owner && <span className="text-navy text-xs">Active</span>}
-                      </button>
-
-                      <button
-                        onClick={() => handleRoleSwitch(DEMO_CREDENTIALS.faculty)}
-                        className={`w-full text-left px-3 py-2 text-xs rounded-lg transition-colors flex items-center justify-between ${
-                          user?.email === DEMO_CREDENTIALS.faculty ? "bg-navy-50 font-bold text-navy" : "hover:bg-paper-100 text-ink-700"
-                        }`}
-                      >
-                        <div>
-                          <div className="font-medium text-ink">Dr. Priya Sharma</div>
-                          <div className="text-[11px] text-ink-400">Faculty & Research Mentor</div>
-                        </div>
-                        {user?.email === DEMO_CREDENTIALS.faculty && <span className="text-navy text-xs">Active</span>}
-                      </button>
-
-                      <button
-                        onClick={() => handleRoleSwitch(DEMO_CREDENTIALS.admin)}
-                        className={`w-full text-left px-3 py-2 text-xs rounded-lg transition-colors flex items-center justify-between ${
-                          user?.email === DEMO_CREDENTIALS.admin ? "bg-navy-50 font-bold text-navy" : "hover:bg-paper-100 text-ink-700"
-                        }`}
-                      >
-                        <div>
-                          <div className="font-medium text-ink">Admin Desk</div>
-                          <div className="text-[11px] text-ink-400">Platform Administrator</div>
-                        </div>
-                        {user?.email === DEMO_CREDENTIALS.admin && <span className="text-navy text-xs">Active</span>}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
               {/* Notification Popover */}
               <div className="relative" ref={notifRef}>
                 <button

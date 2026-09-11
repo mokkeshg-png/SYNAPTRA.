@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { DEMO_CREDENTIALS } from "@/lib/seed";
 import {
   Sparkles,
   ArrowRight,
@@ -14,12 +13,7 @@ import {
 } from "lucide-react";
 
 export function Landing() {
-  const { user, login, refresh } = useAuth();
-
-  const handleQuickDemo = async (email: string) => {
-    await login(email, DEMO_CREDENTIALS.password);
-    refresh();
-  };
+  const { user } = useAuth();
 
   return (
     <div className="flex flex-col">
@@ -63,39 +57,6 @@ export function Landing() {
                   </Link>
                 </>
               )}
-            </div>
-
-            {/* Quick Demo Personas Banner */}
-            <div className="mt-10 rounded-xl border border-ink-200 bg-white/80 p-4 shadow-sm backdrop-blur">
-              <p className="text-xs font-semibold uppercase tracking-wider text-ink-500 mb-2">
-                Instant Academic Demo Access:
-              </p>
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <button
-                  onClick={() => handleQuickDemo(DEMO_CREDENTIALS.student)}
-                  className="rounded-lg border border-ink-200 bg-paper-50 px-3 py-1.5 text-xs font-medium text-ink-700 hover:border-navy hover:bg-navy-50 transition"
-                >
-                  🎓 Enter as <strong>Student (Rahul)</strong>
-                </button>
-                <button
-                  onClick={() => handleQuickDemo(DEMO_CREDENTIALS.owner)}
-                  className="rounded-lg border border-ink-200 bg-paper-50 px-3 py-1.5 text-xs font-medium text-ink-700 hover:border-navy hover:bg-navy-50 transition"
-                >
-                  🚀 Enter as <strong>Project Owner (Arjun)</strong>
-                </button>
-                <button
-                  onClick={() => handleQuickDemo(DEMO_CREDENTIALS.faculty)}
-                  className="rounded-lg border border-ink-200 bg-paper-50 px-3 py-1.5 text-xs font-medium text-ink-700 hover:border-navy hover:bg-navy-50 transition"
-                >
-                  👩‍🏫 Enter as <strong>Faculty Mentor (Dr. Priya)</strong>
-                </button>
-                <button
-                  onClick={() => handleQuickDemo(DEMO_CREDENTIALS.admin)}
-                  className="rounded-lg border border-ink-200 bg-paper-50 px-3 py-1.5 text-xs font-medium text-ink-700 hover:border-navy hover:bg-navy-50 transition"
-                >
-                  🛡️ Enter as <strong>Administrator</strong>
-                </button>
-              </div>
             </div>
           </div>
         </div>
